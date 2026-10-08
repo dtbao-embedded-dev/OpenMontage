@@ -133,8 +133,12 @@ point of the default background.
   with faster-whisper **`large-v3`** (`language: "vi"`) and compare it with the script. small and
   medium mishear both ways, so they are not a pronunciation check. Generate several full takes
   and adopt the cleanest one. If a word slips in every take, rephrase it.
-- **English terms the voice garbles:** "HTTP POST" comes out mangled ("HTTP phốt" / "FOST").
-  Keep it on screen and say it another way ("giao thức HTTP"). Add any new garbled term here.
+- **English terms the voice garbles:** keep them on screen and say them another way. Add every new
+  garbled term here.
+  - "HTTP POST" comes out mangled ("HTTP phốt" / "FOST"). Say "giao thức HTTP".
+  - "board" comes out as "bot", which sounds like "both" and changes the meaning. Say "bo mạch".
+- A garbled English term in a transcript is evidence too, not only a garbled Vietnamese word.
+  Check every English term whose spelling changes the meaning.
 - **Closing line:** the last spoken sentence of every video is, verbatim:
   "Có thắc mắc gì về ESP, nhắn tin trực tiếp cho mình nhé, mình trả lời từng người."
   Put it at the end of the final script section, after any other call to action.
