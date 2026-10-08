@@ -46,6 +46,9 @@ export const LetterGrid: React.FC<LetterGridProps> = ({
   const tileW = portrait ? (dense ? 380 : 390) : 340;
   const tileH = portrait ? (dense ? 300 : 440) : 400;
   const letterSize = dense ? 130 : 200;
+  // Longer "letters" (e.g. "ESP32", "16 MB") shrink to fit the tile width;
+  // 0.62 em is a safe average glyph width for Inter ExtraBold.
+  const fitSize = (text: string) => Math.min(letterSize, Math.floor((tileW - 48) / (Math.max(text.length, 1) * 0.62)));
   const titleIn = spring({ frame, fps, config: { damping: 18 } });
 
   return (
@@ -78,7 +81,7 @@ export const LetterGrid: React.FC<LetterGridProps> = ({
                 transform: `translateY(${interpolate(p, [0, 1], [60, 0])}px) scale(${interpolate(p, [0, 1], [0.9, 1])})`,
               }}
             >
-              <div style={{ fontSize: letterSize, fontWeight: 800, letterSpacing: "-0.02em", color: t.color ?? accentColor, lineHeight: 1 }}>{t.letter}</div>
+              <div style={{ fontSize: fitSize(t.letter), fontWeight: 800, letterSpacing: "-0.02em", color: t.color ?? accentColor, lineHeight: 1 }}>{t.letter}</div>
               <div style={{ fontSize: 34, fontWeight: 600, color: textColor, marginTop: 24, textAlign: "center", padding: "0 20px" }}>
                 {t.label}
               </div>
