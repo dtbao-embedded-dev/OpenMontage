@@ -339,6 +339,8 @@ export interface ExplainerProps {
   overlays?: Overlay[];
   captions?: WordCaption[];
   audio?: AudioConfig;
+  /** Seconds of padding after the last cut (default 1). */
+  tailPaddingSeconds?: number;
 }
 
 // ---------------------------------------------------------------------------

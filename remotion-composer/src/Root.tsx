@@ -128,8 +128,10 @@ const calculateMetadata: CalculateMetadataFunction<ExplainerProps> = async ({
     return { durationInFrames: 30 * 60 };
   }
   const lastEnd = Math.max(...cuts.map((c) => c.out_seconds || 0));
-  // Add 1 second padding for final fade
-  return { durationInFrames: Math.ceil((lastEnd + 1) * 30) };
+  // Pad after the last cut (default 1 s). Nothing draws in the padding but the
+  // background, so a video whose last cut already holds its end frame passes 0.
+  const tail = props.tailPaddingSeconds ?? 1;
+  return { durationInFrames: Math.ceil((lastEnd + tail) * 30) };
 };
 
 export const Root: React.FC = () => {
