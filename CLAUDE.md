@@ -129,6 +129,12 @@ point of the default background.
   and never runs a model on this machine. If the server is unreachable or not `ready`,
   stop and report it as a blocker — do not fall back to Piper or any other TTS without approval.
 - Output is not deterministic: when one section must be redone, regenerate all sections together.
+- **Pronunciation check (listen-back):** before rendering, transcribe every section of every take
+  with faster-whisper **`large-v3`** (`language: "vi"`) and compare it with the script. small and
+  medium mishear both ways, so they are not a pronunciation check. Generate several full takes
+  and adopt the cleanest one. If a word slips in every take, rephrase it.
+- **English terms the voice garbles:** "HTTP POST" comes out mangled ("HTTP phốt" / "FOST").
+  Keep it on screen and say it another way ("giao thức HTTP"). Add any new garbled term here.
 - **Closing line:** the last spoken sentence of every video is, verbatim:
   "Có thắc mắc gì về ESP, nhắn tin trực tiếp cho mình nhé, mình trả lời từng người."
   Put it at the end of the final script section, after any other call to action.
