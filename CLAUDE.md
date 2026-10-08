@@ -124,6 +124,16 @@ point of the default background.
 - Setup: `faster-whisper` in the repo `.venv` with `av==16.1.0` — PyAV 17+ dropped the
   `metadata_errors` argument faster-whisper 1.2.1 passes (`TypeError` on `av.open`).
 
+### Render
+
+- Render Remotion on the GPU: pass `remotion_gl: "angle"` to `video_compose` (AMD RX 6700 XT).
+  Benchmark on this machine (300 frames, 1080x1920): 64 s CPU default vs 15 s with `angle`,
+  SSIM 0.997 — visually identical. More `--concurrency` does not help; the CPU rasteriser is the bottleneck.
+- Pass `remotion_timeout_ms` (e.g. 1800000) on long videos: the tool's subprocess timeout
+  defaults to 600 s and otherwise reports a finished render as failed.
+- Explainer props: set `tailPaddingSeconds: 0` when the last cut holds the end frame,
+  or the video ends on 1 s of bare background.
+
 ### Images
 
 - **Library first:** search `E:\Baotd\media\image\INDEX.md` before fetching anything new.
