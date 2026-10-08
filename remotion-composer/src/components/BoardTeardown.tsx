@@ -50,6 +50,9 @@ interface BoardTeardownProps {
    *  TerminalScene, drawn at full opacity from frame 0 so consecutive step cuts do not flash. */
   eyebrow?: string;
   heading?: string;
+  /** Portrait layout: "safe" (default) packs the scene into the TikTok safe area (y 220-1520, right rail
+   *  >= 160 px); "centered" centres viewport + card on the frame with even 120 px side margins. */
+  layout?: "safe" | "centered";
 }
 
 const FONT = "Inter, 'Segoe UI', system-ui, sans-serif";
@@ -94,6 +97,7 @@ export const BoardTeardown: React.FC<BoardTeardownProps> = ({
   dimColor = "rgba(250,252,255,0.62)",
   eyebrow,
   heading,
+  layout = "safe",
 }) => {
   const frame = useCurrentFrame();
   const { fps, width, height } = useVideoConfig();
@@ -103,10 +107,16 @@ export const BoardTeardown: React.FC<BoardTeardownProps> = ({
   // With a step header the layout matches TerminalScene's: header at y 220, even 120 px side margins.
   const hasHeader = portrait && Boolean(eyebrow || heading);
   const HEADER_H = 135 + 40; // eyebrow 30 px + heading 84 px (line-height 1.08) + gap to the viewport
-  const left = portrait ? (hasHeader ? 120 : 88) : 110;
-  const top = portrait ? (hasHeader ? 220 + HEADER_H : 220) : 110;
-  const vw = portrait ? (hasHeader ? width - 240 : width - 88 - 160) : Math.round(width * 0.55);
-  const vh = portrait ? (hasHeader ? 600 : 930) : height - 220;
+  // Centered: the block (viewport + gap + a typical card) sits on the frame centre; the card height
+  // varies per spot, so a fixed reserve keeps the viewport from jumping between spots.
+  const centered = portrait && !hasHeader && layout === "centered";
+  const CARD_RESERVE = 300;
+  const left = portrait ? (hasHeader || centered ? 120 : 88) : 110;
+  const vw = portrait ? (hasHeader || centered ? width - 240 : width - 88 - 160) : Math.round(width * 0.55);
+  const vh = portrait ? (hasHeader ? 600 : centered ? 860 : 930) : height - 220;
+  const top = portrait
+    ? hasHeader ? 220 + HEADER_H : centered ? Math.round((height - (vh + 30 + CARD_RESERVE)) / 2) : 220
+    : 110;
   const cardTop = portrait ? top + vh + 30 : top;
   const cardLeft = portrait ? left : left + vw + 60;
   const cardWidth = portrait ? vw : width - cardLeft - 110;

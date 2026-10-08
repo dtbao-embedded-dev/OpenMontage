@@ -325,6 +325,8 @@ interface Cut {
   // Board teardown props (type: "board_teardown"; reuses `image`)
   imageSize?: { width: number; height: number };
   spots?: TeardownSpot[];
+  // Portrait layout for board_teardown / letter_grid: "safe" (default) or "centered" on the frame
+  layout?: "safe" | "centered";
   // Code compare props (type: "code_compare"; reuses `eyebrow`, `tagline`)
   name?: string;
   code?: string[];
@@ -752,7 +754,7 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
       <LetterGrid
         tiles={cut.tiles} title={cut.title} textColor={textColor} accentColor={accent}
         surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} mutedColor={theme.mutedTextColor}
-        footer={cut.footer} footerAtSeconds={cut.footerAtSeconds}
+        footer={cut.footer} footerAtSeconds={cut.footerAtSeconds} layout={cut.layout}
       />
     );
   }
@@ -763,7 +765,7 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         image={cut.image} imageSize={cut.imageSize} spots={cut.spots}
         textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
         surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} viewportColor={cut.cardBackgroundColor}
-        eyebrow={cut.eyebrow} heading={cut.title}
+        eyebrow={cut.eyebrow} heading={cut.title} layout={cut.layout}
       />
     );
   }
