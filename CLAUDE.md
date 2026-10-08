@@ -110,6 +110,20 @@ point of the default background.
   stop and report it as a blocker — do not fall back to Piper or any other TTS without approval.
 - Output is not deterministic: when one section must be redone, regenerate all sections together.
 
+### Sync (visuals ↔ narration)
+
+- Time every on-screen change inside a narration section (chip switch, tile/label reveal,
+  highlighted number) from **word timestamps measured with faster-whisper** — tool
+  `transcriber`, `language: "vi"`, `model_size: "small"` — on the final narration WAVs.
+  Never estimate from syllable counts or guess which silence ends which sentence.
+- Re-run the transcription whenever narration is regenerated (output is not deterministic).
+- Transcripts are timing data only: no caption track, no subtitles on screen
+  (see "No running captions").
+- Every scene must show its main text or image from its first frames; never leave a scene
+  showing only a small title while the voice is already speaking.
+- Setup: `faster-whisper` in the repo `.venv` with `av==16.1.0` — PyAV 17+ dropped the
+  `metadata_errors` argument faster-whisper 1.2.1 passes (`TypeError` on `av.open`).
+
 ### Images
 
 - **Library first:** search `E:\Baotd\media\image\INDEX.md` before fetching anything new.
