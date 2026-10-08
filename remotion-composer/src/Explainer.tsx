@@ -392,15 +392,19 @@ const Vignette: React.FC = () => (
 // Enhanced Image Scene — spring physics, parallax, variety
 // ---------------------------------------------------------------------------
 
-const ImageScene: React.FC<{ src: string; animation?: string }> = ({
-  src,
-  animation,
-}) => {
+const ImageScene: React.FC<{
+  src: string;
+  animation?: string;
+  fadeIn?: boolean;
+  vignette?: boolean;
+  backgroundColor?: string;
+}> = ({ src, animation, fadeIn: withFadeIn = true, vignette = true, backgroundColor = "#0F172A" }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
 
   // Smooth spring fade-in
-  const fadeIn = spring({ frame, fps, config: { damping: 18, stiffness: 80 } });
+  // transition_in "cut" shows the image at full opacity from frame 0 (e.g. an intro card used as the cover frame)
+  const fadeIn = withFadeIn ? spring({ frame, fps, config: { damping: 18, stiffness: 80 } }) : 1;
 
   // Fade-out for crossfade effect
   const fadeOutStart = durationInFrames - 8;
@@ -443,7 +447,7 @@ const ImageScene: React.FC<{ src: string; animation?: string }> = ({
   // "static" or "none" → just display
 
   return (
-    <AbsoluteFill style={{ overflow: "hidden", background: "#0F172A" }}>
+    <AbsoluteFill style={{ overflow: "hidden", background: backgroundColor }}>
       <Img
         src={resolveAsset(src)}
         style={{
@@ -455,7 +459,7 @@ const ImageScene: React.FC<{ src: string; animation?: string }> = ({
           willChange: "transform, opacity",
         }}
       />
-      <Vignette />
+      {vignette && <Vignette />}
     </AbsoluteFill>
   );
 };
@@ -844,7 +848,13 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
   const animation = cut.animation || cut.transform?.animation;
 
   if (cut.source && isImage(cut.source)) {
-    return maybeWrapWithBg(<ImageScene src={cut.source} animation={animation} />);
+    return maybeWrapWithBg(<ImageScene
+        src={cut.source}
+        animation={animation}
+        fadeIn={!["cut", "none"].includes((cut.transition_in || "").toLowerCase())}
+        vignette={cut.vignette ?? true}
+        backgroundColor={cut.backgroundColor}
+      />);
   }
 
   if (cut.source && isVideo(cut.source)) {
@@ -863,7 +873,13 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
 
   // Final fallback — try as image if source exists, otherwise show text_card
   if (cut.source) {
-    return maybeWrapWithBg(<ImageScene src={cut.source} animation={animation} />);
+    return maybeWrapWithBg(<ImageScene
+        src={cut.source}
+        animation={animation}
+        fadeIn={!["cut", "none"].includes((cut.transition_in || "").toLowerCase())}
+        vignette={cut.vignette ?? true}
+        backgroundColor={cut.backgroundColor}
+      />);
   }
 
   // No source, no type — render as text card with cut id as fallback
