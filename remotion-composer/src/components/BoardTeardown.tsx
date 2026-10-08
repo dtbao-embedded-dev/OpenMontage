@@ -15,6 +15,9 @@ export interface TeardownSpot {
   atSeconds: number;
   /** Part to frame and outline; omit for a whole-board overview. */
   region?: BoardRegion;
+  /** Area the camera frames instead of `region` (natural px), e.g. to keep the board body in view
+   *  around a pin on the edge; the outline is still drawn around `region`. */
+  focus?: BoardRegion;
   /** Zoom relative to the fitted board; default fits the region into ~70% of the viewport. */
   zoom?: number;
   eyebrow?: string;
@@ -64,7 +67,7 @@ interface Camera {
 /** Where the image sits in the viewport so that `spot` is framed (offsets clamped to the image edges). */
 function cameraFor(spot: TeardownSpot, iw: number, ih: number, vw: number, vh: number): Camera {
   const fit = Math.min(vw / iw, vh / ih);
-  const r = spot.region;
+  const r = spot.focus ?? spot.region;
   const zoom = spot.zoom ?? (r ? Math.min(MAX_ZOOM, (vw * FILL) / (r.w * fit), (vh * FILL) / (r.h * fit)) : 1);
   const scale = fit * Math.max(1, zoom);
   const cx = r ? r.x + r.w / 2 : iw / 2;
@@ -129,12 +132,20 @@ export const BoardTeardown: React.FC<BoardTeardownProps> = ({
 
   const enter = hasHeader ? 1 : spring({ frame, fps, config: { damping: 18 } });
   const r = spot.region;
-  const boxIn = r ? interpolate(move, [0.55, 1], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }) : 0;
+  // A spot that repeats the previous region / text (e.g. only adds a note) keeps the outline and the card
+  // text on screen instead of fading them out and back in.
+  const prev = idx > 0 ? spots[idx - 1] : undefined;
+  const sameRegion = Boolean(r && prev?.region && JSON.stringify(prev.region) === JSON.stringify(r));
+  const sameText = Boolean(prev && prev.name === spot.name && prev.eyebrow === spot.eyebrow && prev.detail === spot.detail);
+  const boxIn = r
+    ? sameRegion ? 1 : interpolate(move, [0.55, 1], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" })
+    : 0;
   const pulse = 1 + 0.25 * Math.max(0, Math.sin((frame - starts[idx]) / 7));
   const pad = 10;
 
   const cardIn = spring({ frame: frame - starts[idx] - (idx === 0 ? 0 : 4), fps, config: { damping: 18 } });
-  const cardSettled = idx === 0 ? Math.max(cardIn, enter) : cardIn;
+  const cardSettled = idx === 0 ? Math.max(cardIn, enter) : sameText ? 1 : cardIn;
+  const noteIn = sameText && spot.note !== prev?.note ? cardIn : 1;
 
   return (
     <AbsoluteFill style={{ fontFamily: FONT }}>
@@ -256,6 +267,8 @@ export const BoardTeardown: React.FC<BoardTeardownProps> = ({
                 lineHeight: 1.3,
                 marginTop: 12,
                 color: spot.noteTone === "bad" ? BAD : spot.noteTone === "good" ? GOOD : mutedColor,
+                opacity: noteIn,
+                transform: `translateY(${interpolate(noteIn, [0, 1], [18, 0])}px)`,
               }}
             >
               {spot.note}
