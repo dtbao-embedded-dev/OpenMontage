@@ -70,7 +70,7 @@ export const StatReveal: React.FC<StatRevealProps> = ({
             fontSize: 96,
             fontWeight: 800,
             color: accentColor,
-            fontFamily: "Space Grotesk, Inter, system-ui, sans-serif",
+            fontFamily: "inherit",
             lineHeight: 1,
             textShadow: `0 0 ${interpolate(glow, [0, 1], [0, 30])}px ${accentColor}66, 0 4px 12px rgba(0,0,0,0.5)`,
           }}
@@ -83,7 +83,7 @@ export const StatReveal: React.FC<StatRevealProps> = ({
               fontSize: 22,
               fontWeight: 500,
               color: textColor,
-              fontFamily: "Space Grotesk, Inter, system-ui, sans-serif",
+              fontFamily: "inherit",
               marginTop: 8,
               opacity: spring({
                 frame: frame - 10,
