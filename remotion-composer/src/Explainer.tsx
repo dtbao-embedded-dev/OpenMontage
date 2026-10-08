@@ -30,6 +30,10 @@ import type { TerminalStep } from "./components/TerminalScene";
 import { ScreenshotScene } from "./components/ScreenshotScene";
 import type { ScreenshotStep } from "./components/ScreenshotScene";
 import { ProviderChip } from "./components/ProviderChip";
+import { ChipSpotlight } from "./components/ChipSpotlight";
+import type { ChipSpec, RadioBadge } from "./components/ChipSpotlight";
+import { LetterGrid } from "./components/LetterGrid";
+import type { LetterTile } from "./components/LetterGrid";
 import { resolveAsset } from "./lib/resolveAsset";
 import type { ParticleType } from "./components/ParticleOverlay";
 import { resolveTheme, type ThemeConfig, DEFAULT_THEME } from "./Root";
@@ -268,6 +272,17 @@ interface Cut {
   screenshotSteps?: ScreenshotStep[];
   screenshotSize?: { width: number; height: number };
   cursorStartAt?: [number, number];
+  // Chip spotlight props (type: "chip_spotlight")
+  image?: string;
+  chipName?: string;
+  tagline?: string;
+  specs?: ChipSpec[];
+  radios?: RadioBadge[];
+  companionImage?: string;
+  companionLabel?: string;
+  companionAtSeconds?: number;
+  // Letter grid props (type: "letter_grid")
+  tiles?: LetterTile[];
 }
 
 interface Overlay {
@@ -652,6 +667,22 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         accentColor={accent}
         cursorStartAt={cut.cursorStartAt}
       />
+    );
+  }
+
+  if (cut.type === "chip_spotlight" && cut.image && cut.chipName && cut.specs) {
+    return maybeWrapWithBg(
+      <ChipSpotlight
+        image={cut.image} chipName={cut.chipName} tagline={cut.tagline} specs={cut.specs}
+        radios={cut.radios} companionImage={cut.companionImage} companionLabel={cut.companionLabel} companionAtSeconds={cut.companionAtSeconds}
+        textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
+      />
+    );
+  }
+
+  if (cut.type === "letter_grid" && cut.tiles) {
+    return maybeWrapWithBg(
+      <LetterGrid tiles={cut.tiles} title={cut.title} textColor={textColor} accentColor={accent} />
     );
   }
 
