@@ -28,6 +28,7 @@ When you add a new component, append it here and in `src/components/index.ts`.
 
 | `chip_spotlight` | `ChipSpotlight` | `image`, `chipName`, `specs` (list of `{label, value}`) | `tagline`, `radios` (wifi4/wifi6/wifi6-5g/ble/bt-classic/thread/zigbee/ethernet/none), `companionImage`, `companionLabel`, `accentColor` | Hardware product shot (transparent PNG) left, staggered spec rows + SVG radio badges right; optional linked companion board |
 | `letter_grid` | `LetterGrid` | `tiles` (list of `{letter, label, atSeconds?}`) | `title`, `accentColor` | Big-letter tiles that pop in one by one (sync with `atSeconds`) — category/naming maps where values are words, not numbers |
+| `board_teardown` | `BoardTeardown` | `image`, `imageSize` (natural px w/h), `spots` (list of `{atSeconds, name, region?, zoom?, eyebrow?, detail?, note?, noteTone?}`) | `cardBackgroundColor`, `cardBorderColor` | Hardware teardown: board image in a viewport (above, in portrait) that glides/zooms to each part's `region` (natural px) and outlines it, label card below switches per spot (sync with `atSeconds`); omit `region` for a whole-board overview |
 
 ---
 
