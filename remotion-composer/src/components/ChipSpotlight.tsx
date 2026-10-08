@@ -13,8 +13,10 @@ export type RadioBadge =
   | "wifi4"
   | "wifi6"
   | "wifi6-5g"
+  | "wifi6e"
   | "ble"
   | "bt-classic"
+  | "le-audio"
   | "thread"
   | "zigbee"
   | "ethernet"
@@ -23,14 +25,20 @@ export type RadioBadge =
 export interface ChipSpec {
   label: string;
   value: string;
+  /** Draw this value in the accent colour (the one key stat of the frame). */
+  highlight?: boolean;
 }
 
 interface ChipSpotlightProps {
   image: string;
   chipName: string;
+  /** Small accent label above the chip name (e.g. the chip family). */
+  eyebrow?: string;
   tagline?: string;
   specs: ChipSpec[];
   radios?: RadioBadge[];
+  /** One-line "best for" statement shown under the radio badges. */
+  bestFor?: string;
   /** Optional second board shown linked to the first (e.g. P4 + C6 companion). */
   companionImage?: string;
   companionLabel?: string;
@@ -40,6 +48,12 @@ interface ChipSpotlightProps {
   mutedColor?: string;
   accentColor?: string;
   surfaceColor?: string;
+  /** Spec-row dividers and badge borders; dark-theme default is a faint white line. */
+  dividerColor?: string;
+  /** Opacity of the board drop shadow (dark default 0.55; use ~0.18 on light backgrounds). */
+  shadowOpacity?: number;
+  /** Hide the accent radial glow behind the board. */
+  hideGlow?: boolean;
 }
 
 const FONT = "Inter, 'Segoe UI', system-ui, sans-serif";
@@ -48,8 +62,10 @@ const RADIO_LABEL: Record<RadioBadge, string> = {
   wifi4: "Wi-Fi 4",
   wifi6: "Wi-Fi 6",
   "wifi6-5g": "Wi-Fi 6 · 5 GHz",
+  wifi6e: "Wi-Fi 6E · 6 GHz",
   ble: "Bluetooth LE",
   "bt-classic": "BT Classic",
+  "le-audio": "LE Audio",
   thread: "Thread",
   zigbee: "Zigbee",
   ethernet: "Ethernet",
@@ -68,7 +84,7 @@ const RadioIcon: React.FC<{ kind: RadioBadge; color: string }> = ({ kind, color 
       </svg>
     );
   }
-  if (kind === "ble" || kind === "bt-classic") {
+  if (kind === "ble" || kind === "bt-classic" || kind === "le-audio") {
     return (
       <svg {...common}>
         <path d="M7 7l10 10-5 5V2l5 5L7 17" />
@@ -107,9 +123,11 @@ const RadioIcon: React.FC<{ kind: RadioBadge; color: string }> = ({ kind, color 
 export const ChipSpotlight: React.FC<ChipSpotlightProps> = ({
   image,
   chipName,
+  eyebrow,
   tagline,
   specs,
   radios = [],
+  bestFor,
   companionImage,
   companionLabel,
   companionAtSeconds = 1.2,
@@ -117,6 +135,9 @@ export const ChipSpotlight: React.FC<ChipSpotlightProps> = ({
   mutedColor = "#94A3B8",
   accentColor = "#E94560",
   surfaceColor = "rgba(255,255,255,0.06)",
+  dividerColor = "rgba(255,255,255,0.08)",
+  shadowOpacity = 0.55,
+  hideGlow = false,
 }) => {
   const frame = useCurrentFrame();
   const { fps, width, height } = useVideoConfig();
@@ -126,19 +147,20 @@ export const ChipSpotlight: React.FC<ChipSpotlightProps> = ({
   const boardIn = spring({ frame, fps, config: { damping: 16, stiffness: 90 } });
   const boardX = interpolate(boardIn, [0, 1], [-120, 0]);
   const bob = Math.sin(frame / 22) * 8;
-  const glow = interpolate(boardIn, [0, 1], [0, 0.55]);
+  const glow = hideGlow ? 0 : interpolate(boardIn, [0, 1], [0, 0.55]);
 
   const titleIn = spring({ frame: frame - 6, fps, config: { damping: 18 } });
 
   const hasCompanion = Boolean(companionImage);
-  const boardWidth = portrait ? (hasCompanion ? 640 : 860) : hasCompanion ? 560 : 760;
-  const boardMaxHeight = portrait ? (hasCompanion ? 460 : 640) : hasCompanion ? 420 : 640;
+  const boardWidth = portrait ? (hasCompanion ? 600 : 800) : hasCompanion ? 560 : 760;
+  const boardMaxHeight = portrait ? (hasCompanion ? 380 : 520) : hasCompanion ? 420 : 640;
 
   return (
     <AbsoluteFill
       style={
         portrait
-          ? { flexDirection: "column", alignItems: "stretch", justifyContent: "center", padding: "150px 80px 120px", gap: 40 }
+          ? // Keep content inside the TikTok safe area (y 220-1520, right rail >= 160 px).
+            { flexDirection: "column", alignItems: "stretch", justifyContent: "center", padding: "220px 160px 400px 88px", gap: 36 }
           : { flexDirection: "row", alignItems: "center", padding: "0 110px", gap: 70 }
       }
     >
@@ -172,7 +194,7 @@ export const ChipSpotlight: React.FC<ChipSpotlightProps> = ({
               objectFit: "contain",
               transform: `translate(${boardX}px, ${bob}px)`,
               opacity: boardIn,
-              filter: "drop-shadow(0 30px 40px rgba(0,0,0,0.55))",
+              filter: `drop-shadow(0 30px 40px rgba(0,0,0,${shadowOpacity}))`,
             }}
           />
           {hasCompanion && (
@@ -181,6 +203,7 @@ export const ChipSpotlight: React.FC<ChipSpotlightProps> = ({
               label={companionLabel}
               accentColor={accentColor}
               mutedColor={mutedColor}
+              shadowOpacity={shadowOpacity}
               delayFrames={Math.round(fps * companionAtSeconds)}
             />
           )}
@@ -189,12 +212,18 @@ export const ChipSpotlight: React.FC<ChipSpotlightProps> = ({
 
       {/* Spec column */}
       <div style={{ flex: portrait ? "0 0 auto" : 1, display: "flex", flexDirection: "column", fontFamily: FONT }}>
+        {eyebrow && (
+          <div style={{ fontSize: 30, fontWeight: 600, letterSpacing: "0.01em", color: accentColor, marginBottom: 8, opacity: titleIn }}>
+            {eyebrow}
+          </div>
+        )}
         <div
           style={{
-            fontSize: 76,
+            fontSize: portrait ? 96 : 76,
             fontWeight: 800,
             color: textColor,
-            letterSpacing: -1,
+            letterSpacing: "-0.025em",
+            lineHeight: 1.05,
             opacity: titleIn,
             transform: `translateY(${interpolate(titleIn, [0, 1], [24, 0])}px)`,
           }}
@@ -206,7 +235,7 @@ export const ChipSpotlight: React.FC<ChipSpotlightProps> = ({
             {tagline}
           </div>
         )}
-        <div style={{ height: 4, width: interpolate(titleIn, [0, 1], [0, 140]), background: accentColor, borderRadius: 2, margin: "26px 0 22px" }} />
+        <div style={{ height: 4, width: interpolate(titleIn, [0, 1], [0, 140]), background: accentColor, borderRadius: 2, margin: "22px 0 14px" }} />
 
         {specs.map((s, i) => {
           const p = spring({ frame: frame - 14 - i * 7, fps, config: { damping: 18 } });
@@ -218,19 +247,19 @@ export const ChipSpotlight: React.FC<ChipSpotlightProps> = ({
                 alignItems: "baseline",
                 gap: 22,
                 padding: "12px 0",
-                borderBottom: "1px solid rgba(255,255,255,0.08)",
+                borderBottom: `1px solid ${dividerColor}`,
                 opacity: p,
                 transform: `translateX(${interpolate(p, [0, 1], [40, 0])}px)`,
               }}
             >
-              <div style={{ width: 230, fontSize: 26, color: mutedColor, flexShrink: 0 }}>{s.label}</div>
-              <div style={{ fontSize: 38, fontWeight: 700, color: textColor }}>{s.value}</div>
+              <div style={{ width: portrait ? 150 : 230, fontSize: 28, color: mutedColor, flexShrink: 0 }}>{s.label}</div>
+              <div style={{ fontSize: 40, fontWeight: 700, letterSpacing: "-0.01em", color: s.highlight ? accentColor : textColor }}>{s.value}</div>
             </div>
           );
         })}
 
         {radios.length > 0 && (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginTop: 28 }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 24 }}>
             {radios.map((r, i) => {
               const p = spring({ frame: frame - 14 - specs.length * 7 - i * 5, fps, config: { damping: 14 } });
               const isNone = r === "none";
@@ -244,7 +273,7 @@ export const ChipSpotlight: React.FC<ChipSpotlightProps> = ({
                     padding: "10px 18px",
                     borderRadius: 999,
                     background: isNone ? `${accentColor}22` : surfaceColor,
-                    border: `1.5px solid ${isNone ? accentColor : "rgba(255,255,255,0.18)"}`,
+                    border: `1.5px solid ${isNone ? accentColor : dividerColor}`,
                     color: isNone ? accentColor : textColor,
                     fontSize: 26,
                     fontWeight: 600,
@@ -259,6 +288,16 @@ export const ChipSpotlight: React.FC<ChipSpotlightProps> = ({
             })}
           </div>
         )}
+
+        {bestFor && (() => {
+          const p = spring({ frame: frame - 20 - specs.length * 7 - radios.length * 5, fps, config: { damping: 18 } });
+          return (
+            <div style={{ marginTop: 26, fontSize: 40, lineHeight: 1.4, color: textColor, opacity: p }}>
+              <span style={{ color: mutedColor, fontSize: 30 }}>Phù hợp: </span>
+              {bestFor}
+            </div>
+          );
+        })()}
       </div>
     </AbsoluteFill>
   );
@@ -269,8 +308,9 @@ const CompanionLink: React.FC<{
   label?: string;
   accentColor: string;
   mutedColor: string;
+  shadowOpacity: number;
   delayFrames: number;
-}> = ({ image, label, accentColor, mutedColor, delayFrames }) => {
+}> = ({ image, label, accentColor, mutedColor, shadowOpacity, delayFrames }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const p = spring({ frame: frame - delayFrames, fps, config: { damping: 16 } });
@@ -282,7 +322,7 @@ const CompanionLink: React.FC<{
         <line x1="6" y1="0" x2="6" y2="60" stroke={accentColor} strokeWidth="4" strokeDasharray="8 7" strokeDashoffset={dashOffset} />
       </svg>
       <div style={{ display: "flex", alignItems: "center", gap: 24, transform: `translateY(${interpolate(p, [0, 1], [30, 0])}px)` }}>
-        <Img src={resolveAsset(image)} style={{ width: 230, objectFit: "contain", filter: "drop-shadow(0 16px 20px rgba(0,0,0,0.5))" }} />
+        <Img src={resolveAsset(image)} style={{ width: 230, objectFit: "contain", filter: `drop-shadow(0 16px 20px rgba(0,0,0,${shadowOpacity * 0.9}))` }} />
         {label && <div style={{ fontFamily: FONT, fontSize: 28, color: mutedColor, maxWidth: 260 }}>{label}</div>}
       </div>
     </div>
