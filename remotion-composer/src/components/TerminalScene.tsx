@@ -29,6 +29,12 @@ interface TerminalSceneProps {
   fontSize?: number;
   /** Window height (px or CSS length); a short window suits portrait frames. */
   windowHeight?: number | string;
+  /** Small label above the heading (e.g. "Bước 1/4"); with `heading` it switches to the light-theme header layout. */
+  eyebrow?: string;
+  /** Step heading drawn above the window, left-aligned inside the safe area. */
+  heading?: string;
+  eyebrowColor?: string;
+  headingColor?: string;
 }
 
 interface RenderedLine {
@@ -53,9 +59,15 @@ export const TerminalScene: React.FC<TerminalSceneProps> = ({
   backgroundColor = "#0B0F1A",
   fontSize = 26,
   windowHeight = "80%",
+  eyebrow,
+  heading,
+  eyebrowColor = "#0066CC",
+  headingColor = "#1D1D1F",
 }) => {
   const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+  const { fps, width, height } = useVideoConfig();
+  const portrait = height > width;
+  const hasHeader = Boolean(eyebrow || heading);
 
   // Lay out timing in frames
   const lines: RenderedLine[] = [];
@@ -116,22 +128,46 @@ export const TerminalScene: React.FC<TerminalSceneProps> = ({
     <AbsoluteFill
       style={{
         background: backgroundColor,
-        justifyContent: "center",
-        alignItems: "center",
-        padding: "80px",
+        justifyContent: hasHeader ? "flex-start" : "center",
+        alignItems: hasHeader ? "flex-start" : "center",
+        // Header layout keeps everything inside the TikTok safe area (top 220, left 88, right rail >= 160 px).
+        padding: hasHeader ? (portrait ? "220px 160px 0 88px" : "110px") : "80px",
         fontFamily: "'JetBrains Mono', 'Consolas', 'Monaco', monospace",
       }}
     >
+      {hasHeader && (
+        <div
+          style={{
+            fontFamily: "Inter, 'Segoe UI', system-ui, sans-serif",
+            marginBottom: 40,
+            opacity: windowOpacity,
+            transform: `translateY(${interpolate(windowOpacity, [0, 1], [16, 0])}px)`,
+          }}
+        >
+          {eyebrow && (
+            <div style={{ fontSize: 30, fontWeight: 600, letterSpacing: "0.01em", color: eyebrowColor, marginBottom: 8 }}>
+              {eyebrow}
+            </div>
+          )}
+          {heading && (
+            <div style={{ fontSize: 84, fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1.08, color: headingColor }}>
+              {heading}
+            </div>
+          )}
+        </div>
+      )}
       <div
         style={{
-          width: "85%",
+          width: hasHeader ? "100%" : "85%",
           maxWidth: 1600,
           height: windowHeight,
           opacity: windowOpacity,
           transform: `scale(${interpolate(windowOpacity, [0, 1], [0.97, 1])})`,
           borderRadius: 16,
           overflow: "hidden",
-          boxShadow: "0 40px 120px rgba(0,0,0,0.6), 0 0 1px rgba(255,255,255,0.2) inset",
+          boxShadow: hasHeader
+            ? "0 24px 60px rgba(0,0,0,0.18), 0 0 1px rgba(255,255,255,0.2) inset"
+            : "0 40px 120px rgba(0,0,0,0.6), 0 0 1px rgba(255,255,255,0.2) inset",
           background: "#12151F",
           position: "relative",
         }}
@@ -247,7 +283,7 @@ export const TerminalScene: React.FC<TerminalSceneProps> = ({
                 key={`${pill.startFrame}-${idx}`}
                 style={{
                   position: "absolute",
-                  top: 28 + idx * 62,
+                  top: 28 + idx * (hasHeader ? 78 : 62),
                   right: 32,
                   padding: "12px 20px",
                   background: pill.color,
@@ -255,7 +291,7 @@ export const TerminalScene: React.FC<TerminalSceneProps> = ({
                   borderRadius: 999,
                   fontFamily: "Inter, sans-serif",
                   fontWeight: 700,
-                  fontSize: 20,
+                  fontSize: hasHeader ? 30 : 20,
                   letterSpacing: 0.2,
                   opacity: alpha,
                   transform: `translateY(${translateY}px)`,
