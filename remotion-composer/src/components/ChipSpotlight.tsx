@@ -152,6 +152,8 @@ export const ChipSpotlight: React.FC<ChipSpotlightProps> = ({
   const titleIn = spring({ frame: frame - 6, fps, config: { damping: 18 } });
 
   const hasCompanion = Boolean(companionImage);
+  // One label column for every row, wide enough for the longest label (~0.56 em per Inter glyph at 28 px) plus a gap.
+  const labelWidth = Math.max(portrait ? 150 : 230, Math.ceil(Math.max(...specs.map((s) => s.label.length)) * 28 * 0.56) + 20);
   const boardWidth = portrait ? (hasCompanion ? 600 : 800) : hasCompanion ? 560 : 760;
   const boardMaxHeight = portrait ? (hasCompanion ? 380 : 520) : hasCompanion ? 420 : 640;
 
@@ -252,7 +254,7 @@ export const ChipSpotlight: React.FC<ChipSpotlightProps> = ({
                 transform: `translateX(${interpolate(p, [0, 1], [40, 0])}px)`,
               }}
             >
-              <div style={{ width: portrait ? 150 : 230, fontSize: 28, color: mutedColor, flexShrink: 0 }}>{s.label}</div>
+              <div style={{ width: labelWidth, fontSize: 28, color: mutedColor, flexShrink: 0 }}>{s.label}</div>
               <div style={{ fontSize: 40, fontWeight: 700, letterSpacing: "-0.01em", color: s.highlight ? accentColor : textColor }}>{s.value}</div>
             </div>
           );
