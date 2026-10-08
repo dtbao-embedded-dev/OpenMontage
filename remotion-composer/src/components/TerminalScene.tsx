@@ -25,6 +25,10 @@ interface TerminalSceneProps {
   prompt?: string;
   accentColor?: string;
   backgroundColor?: string;
+  /** Body text size in px; the title bar and cursor scale with it. */
+  fontSize?: number;
+  /** Window height (px or CSS length); a short window suits portrait frames. */
+  windowHeight?: number | string;
 }
 
 interface RenderedLine {
@@ -47,6 +51,8 @@ export const TerminalScene: React.FC<TerminalSceneProps> = ({
   prompt = "$",
   accentColor = "#22D3EE",
   backgroundColor = "#0B0F1A",
+  fontSize = 26,
+  windowHeight = "80%",
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -120,7 +126,7 @@ export const TerminalScene: React.FC<TerminalSceneProps> = ({
         style={{
           width: "85%",
           maxWidth: 1600,
-          height: "80%",
+          height: windowHeight,
           opacity: windowOpacity,
           transform: `scale(${interpolate(windowOpacity, [0, 1], [0.97, 1])})`,
           borderRadius: 16,
@@ -149,7 +155,7 @@ export const TerminalScene: React.FC<TerminalSceneProps> = ({
               flex: 1,
               textAlign: "center",
               color: "#8E8E93",
-              fontSize: 16,
+              fontSize: Math.round(fontSize * 0.62),
               fontFamily: "Inter, sans-serif",
             }}
           >
@@ -161,7 +167,7 @@ export const TerminalScene: React.FC<TerminalSceneProps> = ({
         <div
           style={{
             padding: "32px 40px",
-            fontSize: 26,
+            fontSize,
             lineHeight: 1.55,
             color: "#E5E7EB",
             height: "calc(100% - 46px)",
@@ -188,8 +194,8 @@ export const TerminalScene: React.FC<TerminalSceneProps> = ({
                     <span
                       style={{
                         display: "inline-block",
-                        width: 12,
-                        height: 26,
+                        width: Math.round(fontSize * 0.46),
+                        height: fontSize,
                         background: "#F1F5F9",
                         marginLeft: 2,
                         transform: "translateY(4px)",
