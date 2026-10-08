@@ -10,6 +10,7 @@ import {
   useVideoConfig,
 } from "remotion";
 import { loadFont } from "@remotion/google-fonts/SpaceGrotesk";
+import { loadFont as loadInter } from "@remotion/google-fonts/Inter";
 import { TextCard } from "./components/TextCard";
 import { StatCard } from "./components/StatCard";
 import { CalloutBox } from "./components/CalloutBox";
@@ -42,6 +43,13 @@ import { resolveTheme, type ThemeConfig, DEFAULT_THEME } from "./Root";
 const { fontFamily } = loadFont("normal", {
   weights: ["400", "700"],
   subsets: ["latin"],
+});
+
+// Inter covers Vietnamese; it is the fallback for every theme font and the
+// family components name in their own defaults ("Inter, system-ui, ...").
+const { fontFamily: interFamily } = loadInter("normal", {
+  weights: ["400", "500", "600", "700", "800"],
+  subsets: ["latin", "latin-ext", "vietnamese"],
 });
 
 // ---------------------------------------------------------------------------
@@ -874,7 +882,7 @@ export const Explainer: React.FC<ExplainerProps> = (props) => {
   const theme = resolveTheme(props as Record<string, unknown>);
 
   return (
-    <AbsoluteFill style={{ background: theme.backgroundColor, fontFamily: theme.headingFont || fontFamily }}>
+    <AbsoluteFill style={{ background: theme.backgroundColor, fontFamily: `${theme.headingFont || fontFamily}, ${interFamily}, system-ui, sans-serif` }}>
       {/* Layer 0: Animated gradient background — driven by theme */}
       <AnimatedBackground theme={theme} />
 

@@ -85,7 +85,7 @@ export const ProviderChip: React.FC<ProviderChipProps> = ({
             border: `2px solid ${accentColor}`,
             borderRadius: 999,
             color: accentColor,
-            fontFamily: "'Space Grotesk', Inter, sans-serif",
+            fontFamily: "inherit",
             fontWeight: 700,
             fontSize: 28,
             letterSpacing: 0.3,
