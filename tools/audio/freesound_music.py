@@ -28,9 +28,25 @@ from tools.base_tool import (
 )
 
 
+# Freesound filter names per short license key, and the URL fragment used to
+# double-check the license each result actually reports.
+_LICENSE_FILTER_NAMES = {
+    "cc0": ("Creative Commons 0", "publicdomain/zero"),
+    "by": ("Attribution", "licenses/by/"),
+    "by-nc": ("Attribution NonCommercial", "licenses/by-nc/"),
+}
+
+
+def _license_key(license_url: str) -> str | None:
+    for key, (_, fragment) in _LICENSE_FILTER_NAMES.items():
+        if fragment in license_url:
+            return key
+    return None
+
+
 class FreesoundMusic(BaseTool):
     name = "freesound_music"
-    version = "0.1.0"
+    version = "0.2.0"
     tier = ToolTier.SOURCE
     capability = "music_search"
     provider = "freesound"
@@ -54,6 +70,8 @@ class FreesoundMusic(BaseTool):
         "rating_sort": True,
         "tag_metadata": True,
         "free_creative_commons": True,
+        "license_filter": True,
+        "candidate_listing": True,
     }
     best_for = [
         "ambient and atmospheric background music",
@@ -92,6 +110,23 @@ class FreesoundMusic(BaseTool):
             "output_path": {
                 "type": "string",
                 "description": "File path to save the downloaded MP3",
+            },
+            "licenses": {
+                "type": "array",
+                "items": {"type": "string", "enum": sorted(_LICENSE_FILTER_NAMES)},
+                "default": ["cc0", "by"],
+                "description": "Allowed licenses. Default excludes NonCommercial (by-nc) and Sampling+.",
+            },
+            "list_only": {
+                "type": "boolean",
+                "default": False,
+                "description": "Return the ranked candidates (with license and author) without downloading",
+            },
+            "result_index": {
+                "type": "integer",
+                "default": 0,
+                "minimum": 0,
+                "description": "Which ranked candidate to download (0 = top rated)",
             },
         },
     }
@@ -138,8 +173,20 @@ class FreesoundMusic(BaseTool):
                     duration_seconds=round(time.time() - start, 2),
                 )
 
-            # Step 2: Pick the top result (sorted by rating)
-            sound = search_result[0]
+            candidates = [self._describe(s) for s in search_result]
+            if inputs.get("list_only"):
+                return ToolResult(
+                    success=True,
+                    data={"provider": "freesound", "query": inputs["query"], "candidates": candidates},
+                    cost_usd=0.0,
+                    duration_seconds=round(time.time() - start, 2),
+                )
+
+            # Step 2: Pick the requested candidate (default: top rated)
+            index = inputs.get("result_index", 0)
+            if index >= len(search_result):
+                raise IndexError(f"result_index {index} out of range ({len(search_result)} results)")
+            sound = search_result[index]
 
             # Step 3: Download the HQ MP3 preview
             output_path = self._download(sound, inputs, api_key)
@@ -154,17 +201,12 @@ class FreesoundMusic(BaseTool):
         return ToolResult(
             success=True,
             data={
+                **self._describe(sound),
                 "provider": "freesound",
-                "sound_id": sound.get("id"),
-                "name": sound.get("name", "Unknown"),
-                "duration_seconds": sound.get("duration"),
-                "avg_rating": sound.get("avg_rating"),
                 "tags": sound.get("tags", []),
                 "query": inputs["query"],
                 "output": str(output_path),
                 "format": "mp3",
-                "license": "Creative Commons (check individual sound license)",
-                "freesound_url": f"https://freesound.org/people/{sound.get('username', '')}/sounds/{sound.get('id', '')}/",
                 "results_found": len(search_result),
             },
             artifacts=[str(output_path)],
@@ -178,11 +220,14 @@ class FreesoundMusic(BaseTool):
         min_dur = inputs.get("min_duration", 30)
         max_dur = inputs.get("max_duration", 120)
 
+        allowed = inputs.get("licenses") or ["cc0", "by"]
+        names = " OR ".join(f'"{_LICENSE_FILTER_NAMES[k][0]}"' for k in allowed)
+
         params = urllib.parse.urlencode({
             "query": query,
-            "filter": f"duration:[{min_dur} TO {max_dur}]",
+            "filter": f"duration:[{min_dur} TO {max_dur}] license:({names})",
             "sort": "rating_desc",
-            "fields": "id,name,duration,previews,tags,avg_rating,username",
+            "fields": "id,name,duration,previews,tags,avg_rating,username,license",
             "token": api_key,
             "page_size": 15,
         })
@@ -197,8 +242,28 @@ class FreesoundMusic(BaseTool):
         with urllib.request.urlopen(request, timeout=30) as response:
             data = json.loads(response.read().decode("utf-8"))
 
-        results = data.get("results", [])
-        return results
+        # Re-check the reported license: never pass through a sound the filter let slip.
+        return [r for r in data.get("results", []) if _license_key(r.get("license", "")) in allowed]
+
+    @staticmethod
+    def _describe(sound: dict) -> dict[str, Any]:
+        """License and attribution facts for one search result."""
+        license_url = sound.get("license", "")
+        key = _license_key(license_url)
+        username = sound.get("username", "")
+        name = sound.get("name", "Unknown")
+        return {
+            "sound_id": sound.get("id"),
+            "name": name,
+            "author": username,
+            "duration_seconds": sound.get("duration"),
+            "avg_rating": sound.get("avg_rating"),
+            "license": key,
+            "license_url": license_url,
+            "attribution_required": key != "cc0",
+            "attribution": f'"{name}" by {username} (freesound.org), {key.upper() if key else "unknown license"}',
+            "freesound_url": f"https://freesound.org/people/{username}/sounds/{sound.get('id', '')}/",
+        }
 
     def _download(self, sound: dict, inputs: dict[str, Any], api_key: str) -> Path:
         """Download the HQ MP3 preview of a Freesound sound."""
