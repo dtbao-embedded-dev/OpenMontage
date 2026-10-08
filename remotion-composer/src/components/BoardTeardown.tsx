@@ -23,8 +23,9 @@ export interface TeardownSpot {
   /** Short status line under the detail. */
   note?: string;
   noteTone?: "good" | "bad";
-  /** Light a glow over the region centre that toggles on/off, like a blinking LED (starts "on" at the spot). */
-  blink?: { color?: string; periodSeconds?: number };
+  /** Light a glow that toggles on/off, like a blinking LED (starts "on" at the spot). It centres on `blink.region`
+   *  (the LED body itself, natural px) or on the spot region when omitted. */
+  blink?: { color?: string; periodSeconds?: number; region?: BoardRegion };
 }
 
 interface BoardTeardownProps {
@@ -42,6 +43,10 @@ interface BoardTeardownProps {
   viewportColor?: string;
   /** Colour washed over everything outside the outlined part. */
   dimColor?: string;
+  /** Small label above the heading (e.g. "Bước 3/4"); with `heading` the scene gets the same step header as
+   *  TerminalScene, drawn at full opacity from frame 0 so consecutive step cuts do not flash. */
+  eyebrow?: string;
+  heading?: string;
 }
 
 const FONT = "Inter, 'Segoe UI', system-ui, sans-serif";
@@ -84,16 +89,21 @@ export const BoardTeardown: React.FC<BoardTeardownProps> = ({
   borderColor = "rgba(0,0,0,0.08)",
   viewportColor = "rgba(255,255,255,0.75)",
   dimColor = "rgba(250,252,255,0.62)",
+  eyebrow,
+  heading,
 }) => {
   const frame = useCurrentFrame();
   const { fps, width, height } = useVideoConfig();
   const portrait = height > width;
 
   // Portrait: viewport above the label card, inside the TikTok safe area (y 220-1520, right rail >= 160 px).
-  const left = portrait ? 88 : 110;
-  const top = portrait ? 220 : 110;
-  const vw = portrait ? width - 88 - 160 : Math.round(width * 0.55);
-  const vh = portrait ? 930 : height - 220;
+  // With a step header the layout matches TerminalScene's: header at y 220, even 120 px side margins.
+  const hasHeader = portrait && Boolean(eyebrow || heading);
+  const HEADER_H = 135 + 40; // eyebrow 30 px + heading 84 px (line-height 1.08) + gap to the viewport
+  const left = portrait ? (hasHeader ? 120 : 88) : 110;
+  const top = portrait ? (hasHeader ? 220 + HEADER_H : 220) : 110;
+  const vw = portrait ? (hasHeader ? width - 240 : width - 88 - 160) : Math.round(width * 0.55);
+  const vh = portrait ? (hasHeader ? 600 : 930) : height - 220;
   const cardTop = portrait ? top + vh + 30 : top;
   const cardLeft = portrait ? left : left + vw + 60;
   const cardWidth = portrait ? vw : width - cardLeft - 110;
@@ -117,7 +127,7 @@ export const BoardTeardown: React.FC<BoardTeardownProps> = ({
     oy: interpolate(move, [0, 1], [from.oy, to.oy]),
   };
 
-  const enter = spring({ frame, fps, config: { damping: 18 } });
+  const enter = hasHeader ? 1 : spring({ frame, fps, config: { damping: 18 } });
   const r = spot.region;
   const boxIn = r ? interpolate(move, [0.55, 1], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }) : 0;
   const pulse = 1 + 0.25 * Math.max(0, Math.sin((frame - starts[idx]) / 7));
@@ -128,6 +138,20 @@ export const BoardTeardown: React.FC<BoardTeardownProps> = ({
 
   return (
     <AbsoluteFill style={{ fontFamily: FONT }}>
+      {hasHeader && (
+        <div style={{ position: "absolute", left, top: 220, width: vw }}>
+          {eyebrow && (
+            <div style={{ fontSize: 30, fontWeight: 600, letterSpacing: "0.01em", color: accentColor, marginBottom: 8 }}>
+              {eyebrow}
+            </div>
+          )}
+          {heading && (
+            <div style={{ fontSize: 84, fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1.08, color: textColor }}>
+              {heading}
+            </div>
+          )}
+        </div>
+      )}
       <div
         style={{
           position: "absolute",
@@ -177,13 +201,14 @@ export const BoardTeardown: React.FC<BoardTeardownProps> = ({
           const edge = Math.min(t % period, period - (t % period));
           const level = boxIn * (on ? interpolate(edge, [0, 2], [0.4, 1], { extrapolateRight: "clamp" }) : 0);
           const color = spot.blink.color ?? "#FFFFFF";
-          const d = Math.max(r.w, r.h) * cam.scale * 1.6;
+          const g = spot.blink.region ?? r;
+          const d = Math.max(g.w, g.h) * cam.scale * 1.6;
           return (
             <div
               style={{
                 position: "absolute",
-                left: cam.ox + (r.x + r.w / 2) * cam.scale - d / 2,
-                top: cam.oy + (r.y + r.h / 2) * cam.scale - d / 2,
+                left: cam.ox + (g.x + g.w / 2) * cam.scale - d / 2,
+                top: cam.oy + (g.y + g.h / 2) * cam.scale - d / 2,
                 width: d,
                 height: d,
                 borderRadius: "50%",

@@ -745,6 +745,7 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         image={cut.image} imageSize={cut.imageSize} spots={cut.spots}
         textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
         surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} viewportColor={cut.cardBackgroundColor}
+        eyebrow={cut.eyebrow} heading={cut.title}
       />
     );
   }
