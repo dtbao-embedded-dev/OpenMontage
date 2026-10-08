@@ -4,13 +4,16 @@ import {
   Img,
   OffthreadVideo,
   Sequence,
+  cancelRender,
+  continueRender,
+  delayRender,
   interpolate,
   spring,
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
 import { loadFont } from "@remotion/google-fonts/SpaceGrotesk";
-import { loadFont as loadInter } from "@remotion/google-fonts/Inter";
+import interVariableUrl from "./fonts/InterVariable.woff2";
 import { TextCard } from "./components/TextCard";
 import { StatCard } from "./components/StatCard";
 import { CalloutBox } from "./components/CalloutBox";
@@ -51,10 +54,25 @@ const { fontFamily } = loadFont("normal", {
 
 // Inter covers Vietnamese; it is the fallback for every theme font and the
 // family components name in their own defaults ("Inter, system-ui, ...").
-const { fontFamily: interFamily } = loadInter("normal", {
-  weights: ["400", "500", "600", "700", "800"],
-  subsets: ["latin", "latin-ext", "vietnamese"],
-});
+// It is bundled (rsms/inter InterVariable.woff2, OFL, all weights, full Vietnamese) instead of fetched from
+// Google Fonts: the Google loader gives up after 18 s per subset and lets the frame render anyway, so under
+// render concurrency some tabs drew "ư/ơ" in a fallback font and the glyphs jumped between frames.
+// Rendering waits for this face and fails loudly if it cannot load.
+const interFamily = "Inter";
+if (typeof FontFace !== "undefined" && typeof document !== "undefined") {
+  const interHandle = delayRender("Loading bundled Inter variable font", { timeoutInMilliseconds: 60000 });
+  const interFace = new FontFace(interFamily, `url(${interVariableUrl}) format('woff2')`, {
+    weight: "100 900",
+    style: "normal",
+  });
+  interFace
+    .load()
+    .then(() => {
+      document.fonts.add(interFace);
+      continueRender(interHandle);
+    })
+    .catch((err) => cancelRender(err));
+}
 
 // ---------------------------------------------------------------------------
 // Animated Background — Gradient Mesh + Floating Orbs
