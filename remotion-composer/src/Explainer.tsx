@@ -37,6 +37,8 @@ import { LetterGrid } from "./components/LetterGrid";
 import type { LetterTile } from "./components/LetterGrid";
 import { BoardTeardown } from "./components/BoardTeardown";
 import type { TeardownSpot } from "./components/BoardTeardown";
+import { CodeCompare } from "./components/CodeCompare";
+import type { CodePoint, CodeLayer } from "./components/CodeCompare";
 import { resolveAsset } from "./lib/resolveAsset";
 import type { ParticleType } from "./components/ParticleOverlay";
 import { resolveTheme, type ThemeConfig, DEFAULT_THEME } from "./Root";
@@ -305,6 +307,15 @@ interface Cut {
   // Board teardown props (type: "board_teardown"; reuses `image`)
   imageSize?: { width: number; height: number };
   spots?: TeardownSpot[];
+  // Code compare props (type: "code_compare"; reuses `eyebrow`, `tagline`)
+  name?: string;
+  code?: string[];
+  codeTitle?: string;
+  codeAtSeconds?: number;
+  codeRevealSeconds?: number;
+  codeFontSize?: number;
+  layers?: CodeLayer[];
+  points?: CodePoint[];
 }
 
 interface Overlay {
@@ -726,6 +737,19 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         image={cut.image} imageSize={cut.imageSize} spots={cut.spots}
         textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
         surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} viewportColor={cut.cardBackgroundColor}
+      />
+    );
+  }
+
+  if (cut.type === "code_compare" && cut.name && (cut.code || cut.layers)) {
+    return maybeWrapWithBg(
+      <CodeCompare
+        name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline}
+        code={cut.code} codeTitle={cut.codeTitle} codeAtSeconds={cut.codeAtSeconds}
+        codeRevealSeconds={cut.codeRevealSeconds} codeFontSize={cut.codeFontSize}
+        layers={cut.layers} points={cut.points}
+        textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
+        surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor}
       />
     );
   }
