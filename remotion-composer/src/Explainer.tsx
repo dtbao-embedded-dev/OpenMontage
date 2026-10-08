@@ -697,6 +697,10 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         backgroundColor={bgColor || theme.backgroundColor}
         fontSize={cut.fontSize}
         windowHeight={cut.terminalHeight}
+        eyebrow={cut.eyebrow}
+        heading={cut.title}
+        eyebrowColor={accent}
+        headingColor={textColor}
       />
     );
   }
