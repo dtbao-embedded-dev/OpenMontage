@@ -47,8 +47,9 @@ export const LetterGrid: React.FC<LetterGridProps> = ({
   const tileH = portrait ? (dense ? 300 : 440) : 400;
   const letterSize = dense ? 130 : 200;
   // Longer "letters" (e.g. "ESP32", "16 MB") shrink to fit the tile width;
-  // 0.62 em is a safe average glyph width for Inter ExtraBold.
-  const fitSize = (text: string) => Math.min(letterSize, Math.floor((tileW - 48) / (Math.max(text.length, 1) * 0.62)));
+  // 0.62 em is a safe average glyph width for Inter ExtraBold; W and M run ~0.95 em.
+  const textEm = (text: string) => Math.max([...text].reduce((em, c) => em + (/[WMwm]/.test(c) ? 0.95 : 0.62), 0), 0.62);
+  const fitSize = (text: string) => Math.min(letterSize, Math.floor((tileW - 48) / textEm(text)));
   const titleIn = spring({ frame, fps, config: { damping: 18 } });
 
   return (
