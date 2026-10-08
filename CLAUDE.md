@@ -129,16 +129,24 @@ point of the default background.
   and never runs a model on this machine. If the server is unreachable or not `ready`,
   stop and report it as a blocker — do not fall back to Piper or any other TTS without approval.
 - Output is not deterministic: when one section must be redone, regenerate all sections together.
-- **Pronunciation check (listen-back):** before rendering, transcribe every section of every take
-  with faster-whisper **`large-v3`** (`language: "vi"`) and compare it with the script. small and
-  medium mishear both ways, so they are not a pronunciation check. Generate several full takes
-  and adopt the cleanest one. If a word slips in every take, rephrase it.
-- **English terms the voice garbles:** keep them on screen and say them another way. Add every new
-  garbled term here.
-  - "HTTP POST" comes out mangled ("HTTP phốt" / "FOST"). Say "giao thức HTTP".
-  - "board" comes out as "bot", which sounds like "both" and changes the meaning. Say "bo mạch".
-- A garbled English term in a transcript is evidence too, not only a garbled Vietnamese word.
-  Check every English term whose spelling changes the meaning.
+- **Narration verify — audio first, then video.** Run the steps in this order:
+  1. Request the server for each script section (all sections together, several full takes).
+  2. Before any scene plan or video render, transcribe every section of every take with
+     faster-whisper **`large-v3`** (`language: "vi"`). Compare it with the script sentence by
+     sentence. Check both the Vietnamese words and the English terms whose meaning changes
+     when misread (e.g. "board" heard as "bot"/"both").
+  3. Adopt the cleanest take. If no take passes, regenerate. Build the video only from audio
+     that passed.
+  4. After the video render, run a final large-v3 listen-back on the audio of the full render.
+     It catches mix and cut problems. It does not replace step 2.
+
+  small and medium mishear both ways, so they are not a pronunciation check (small stays the
+  timing source, see Sync). large-v3 invents phrases such as "Cảm ơn các bạn đã theo dõi" on a
+  music-only tail; ignore text past the last narration section.
+- **Terms the voice garbles:** fixed on the voice-tts server, not in OpenMontage. Keep the term in
+  the script and do not rephrase or respell it here. If a term still comes out wrong, stop and
+  report it with the take, the time and what large-v3 heard. Known so far: "board" → "bot",
+  "HTTP POST" → "HTTP phốt", "AP" → "áp".
 - **Closing line:** the last spoken sentence of every video is, verbatim:
   "Có thắc mắc gì về ESP, nhắn tin trực tiếp cho mình nhé, mình trả lời từng người."
   Put it at the end of the final script section, after any other call to action.
