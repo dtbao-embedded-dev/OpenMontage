@@ -69,6 +69,10 @@ export const TerminalScene: React.FC<TerminalSceneProps> = ({
   const portrait = height > width;
   const hasHeader = Boolean(eyebrow || heading);
 
+  // Header layout hard-wraps output like a real terminal window: columns from the body width at 0.56 em per
+  // glyph. JetBrains Mono is not loaded, so the render falls back to Consolas (0.55 em advance).
+  const wrapCols = hasHeader && portrait ? Math.max(20, Math.floor((width - 240 - 64 - 4) / (fontSize * 0.56))) : 0;
+
   // Lay out timing in frames
   const lines: RenderedLine[] = [];
   const pills: RenderedPill[] = [];
@@ -89,12 +93,17 @@ export const TerminalScene: React.FC<TerminalSceneProps> = ({
     } else if (step.kind === "out") {
       const revealFrames = Math.max(2, Math.ceil(0.08 * fps));
       const hold = Math.ceil((step.holdSeconds ?? 0.15) * fps);
-      lines.push({
-        text: step.text,
-        isCmd: false,
-        startFrame: cursorFrame,
-        endFrame: cursorFrame + revealFrames,
-      });
+      const rows = wrapCols > 0 && step.text.length > wrapCols
+        ? Array.from({ length: Math.ceil(step.text.length / wrapCols) }, (_, i) => step.text.slice(i * wrapCols, (i + 1) * wrapCols))
+        : [step.text];
+      for (const row of rows) {
+        lines.push({
+          text: row,
+          isCmd: false,
+          startFrame: cursorFrame,
+          endFrame: cursorFrame + revealFrames,
+        });
+      }
       cursorFrame += revealFrames + hold;
     } else if (step.kind === "pause") {
       cursorFrame += Math.ceil(step.seconds * fps);
@@ -113,16 +122,20 @@ export const TerminalScene: React.FC<TerminalSceneProps> = ({
   // Only render lines that have started
   const visibleLines = lines.filter(l => frame >= l.startFrame);
 
-  // Auto-scroll: keep last N lines in view
-  const MAX_VISIBLE = 18;
+  // Auto-scroll: keep last N lines in view. A numeric window height fits as many lines as the body holds
+  // (title bar ~ 28 px + 0.75 em, body padding 2 x 28 px, line height 1.55 em).
+  const MAX_VISIBLE = typeof windowHeight === "number"
+    ? Math.max(4, Math.floor((windowHeight - (28 + fontSize * 0.75) - 56) / (fontSize * 1.55)))
+    : 18;
   const scrollStart = Math.max(0, visibleLines.length - MAX_VISIBLE);
   const renderedLines = visibleLines.slice(scrollStart);
 
   // Cursor blinks on most recent command
   const blinkPhase = Math.floor(frame / (fps * 0.55)) % 2 === 0;
 
-  // Terminal window frame fade-in
-  const windowOpacity = spring({ frame, fps, config: { damping: 25, stiffness: 100 } });
+  // Terminal window frame fade-in. The header layout is a step in a series of cuts: header and window are
+  // fully drawn from frame 0, so a cut from one step to the next never flashes an empty background.
+  const windowOpacity = hasHeader ? 1 : spring({ frame, fps, config: { damping: 25, stiffness: 100 } });
 
   return (
     <AbsoluteFill
@@ -130,8 +143,9 @@ export const TerminalScene: React.FC<TerminalSceneProps> = ({
         background: backgroundColor,
         justifyContent: hasHeader ? "flex-start" : "center",
         alignItems: hasHeader ? "flex-start" : "center",
-        // Header layout keeps everything inside the TikTok safe area (top 220, left 88, right rail >= 160 px).
-        padding: hasHeader ? (portrait ? "220px 160px 0 88px" : "110px") : "80px",
+        // Header layout keeps everything inside the TikTok safe area (top 220) with even side margins of 120 px,
+        // which still clears the action-rail icons (x >= ~975 on a 1080-wide frame).
+        padding: hasHeader ? (portrait ? "220px 120px 0 120px" : "110px") : "80px",
         fontFamily: "'JetBrains Mono', 'Consolas', 'Monaco', monospace",
       }}
     >
@@ -202,7 +216,7 @@ export const TerminalScene: React.FC<TerminalSceneProps> = ({
         {/* Terminal body */}
         <div
           style={{
-            padding: "32px 40px",
+            padding: hasHeader ? "28px 32px" : "32px 40px",
             fontSize,
             lineHeight: 1.55,
             color: "#E5E7EB",
@@ -223,7 +237,7 @@ export const TerminalScene: React.FC<TerminalSceneProps> = ({
               const isLatest = idx === renderedLines.length - 1;
               const isActive = frame <= line.endFrame + fps * 0.2;
               return (
-                <div key={`${line.startFrame}-${idx}`} style={{ display: "flex", alignItems: "baseline" }}>
+                <div key={`${line.startFrame}-${idx}`} style={{ display: "flex", alignItems: "baseline", whiteSpace: "pre", overflow: "hidden" }}>
                   <span style={{ color: accentColor, marginRight: 12, fontWeight: 600 }}>{prompt}</span>
                   <span style={{ color: "#F1F5F9" }}>{typed}</span>
                   {isLatest && isActive && blinkPhase && (
@@ -251,7 +265,8 @@ export const TerminalScene: React.FC<TerminalSceneProps> = ({
               return (
                 <div
                   key={`${line.startFrame}-${idx}`}
-                  style={{ color: "#9CA3AF", opacity: alpha, paddingLeft: 4 }}
+                  // No wrapping: a long log line is clipped at the window edge, like a non-wrapping terminal.
+                  style={{ color: "#9CA3AF", opacity: alpha, paddingLeft: 4, whiteSpace: "pre", overflow: "hidden" }}
                 >
                   {line.text}
                 </div>
@@ -283,7 +298,8 @@ export const TerminalScene: React.FC<TerminalSceneProps> = ({
                 key={`${pill.startFrame}-${idx}`}
                 style={{
                   position: "absolute",
-                  top: 28 + idx * (hasHeader ? 78 : 62),
+                  // Header layout: pills stack up from the bottom so they never cover the command being typed.
+                  ...(hasHeader ? { bottom: 28 + idx * 78 } : { top: 28 + idx * 62 }),
                   right: 32,
                   padding: "12px 20px",
                   background: pill.color,
