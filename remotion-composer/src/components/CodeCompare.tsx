@@ -43,6 +43,8 @@ interface CodeCompareProps {
   proColor?: string;
   conColor?: string;
   codeFontSize?: number;
+  /** Portrait layout: "safe" (default) pads into the TikTok safe area; "centered" uses even 120 px side margins. */
+  layout?: "safe" | "centered";
 }
 
 const FONT = "Inter, 'Segoe UI', system-ui, sans-serif";
@@ -98,6 +100,7 @@ export const CodeCompare: React.FC<CodeCompareProps> = ({
   proColor = "#1D7A34",
   conColor = "#D70015",
   codeFontSize = 27,
+  layout = "safe",
 }) => {
   const frame = useCurrentFrame();
   const { fps, width, height } = useVideoConfig();
@@ -123,7 +126,7 @@ export const CodeCompare: React.FC<CodeCompareProps> = ({
     <AbsoluteFill
       style={{
         fontFamily: FONT,
-        padding: portrait ? "230px 160px 300px 88px" : "100px 140px",
+        padding: portrait ? (layout === "centered" ? "230px 120px 300px 120px" : "230px 160px 300px 88px") : "100px 140px",
         display: "flex",
         flexDirection: "column",
         // Centred in the safe area; hidden rows keep their space, so nothing shifts as they appear.
