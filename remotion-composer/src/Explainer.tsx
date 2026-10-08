@@ -35,6 +35,8 @@ import { ChipSpotlight } from "./components/ChipSpotlight";
 import type { ChipSpec, RadioBadge } from "./components/ChipSpotlight";
 import { LetterGrid } from "./components/LetterGrid";
 import type { LetterTile } from "./components/LetterGrid";
+import { BoardTeardown } from "./components/BoardTeardown";
+import type { TeardownSpot } from "./components/BoardTeardown";
 import { resolveAsset } from "./lib/resolveAsset";
 import type { ParticleType } from "./components/ParticleOverlay";
 import { resolveTheme, type ThemeConfig, DEFAULT_THEME } from "./Root";
@@ -300,6 +302,9 @@ interface Cut {
   tiles?: LetterTile[];
   footer?: string;
   footerAtSeconds?: number;
+  // Board teardown props (type: "board_teardown"; reuses `image`)
+  imageSize?: { width: number; height: number };
+  spots?: TeardownSpot[];
 }
 
 interface Overlay {
@@ -711,6 +716,16 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         tiles={cut.tiles} title={cut.title} textColor={textColor} accentColor={accent}
         surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} mutedColor={theme.mutedTextColor}
         footer={cut.footer} footerAtSeconds={cut.footerAtSeconds}
+      />
+    );
+  }
+
+  if (cut.type === "board_teardown" && cut.image && cut.imageSize && cut.spots) {
+    return maybeWrapWithBg(
+      <BoardTeardown
+        image={cut.image} imageSize={cut.imageSize} spots={cut.spots}
+        textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
+        surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} viewportColor={cut.cardBackgroundColor}
       />
     );
   }
