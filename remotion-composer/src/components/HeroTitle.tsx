@@ -21,6 +21,23 @@ type HeroTitleProps = {
    * scrim darkens the backdrop and cancels out the theme's dark text.
    */
   scrimBackground?: string;
+  /** Title font size in px (default 72). */
+  titleFontSize?: number;
+};
+
+/** Split characters into words and single-space runs, keeping each run's start index. */
+const groupWords = (chars: string[]) => {
+  const groups: { chars: string[]; start: number }[] = [];
+  chars.forEach((char, i) => {
+    const last = groups[groups.length - 1];
+    const isSpace = char === " ";
+    if (last && !isSpace && last.chars[0] !== " ") {
+      last.chars.push(char);
+    } else {
+      groups.push({ chars: [char], start: i });
+    }
+  });
+  return groups;
 };
 
 const DEFAULT_SCRIM =
@@ -33,6 +50,7 @@ export const HeroTitle: React.FC<HeroTitleProps> = ({
   textColor = "#F8FAFC",
   subtitleColor = "#A78BFA",
   scrimBackground = DEFAULT_SCRIM,
+  titleFontSize = 72,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -52,7 +70,7 @@ export const HeroTitle: React.FC<HeroTitleProps> = ({
         {/* Main title with per-character spring */}
         <div
           style={{
-            fontSize: 72,
+            fontSize: titleFontSize,
             fontWeight: 800,
             fontFamily: "Space Grotesk, Inter, system-ui, sans-serif",
             lineHeight: 1.2,
@@ -62,7 +80,11 @@ export const HeroTitle: React.FC<HeroTitleProps> = ({
             gap: 0,
           }}
         >
-          {titleChars.map((char, i) => {
+          {groupWords(titleChars).map(({ chars, start }) => (
+            // Each word is one unbreakable flex item, so lines wrap only at spaces.
+            <span key={start} style={{ display: "inline-flex", whiteSpace: "nowrap" }}>
+            {chars.map((char, j) => {
+            const i = start + j;
             const delay = i * 1.2;
             const charSpring = spring({
               frame: frame - delay,
@@ -86,6 +108,8 @@ export const HeroTitle: React.FC<HeroTitleProps> = ({
               </span>
             );
           })}
+            </span>
+          ))}
         </div>
 
         {/* Subtitle */}
