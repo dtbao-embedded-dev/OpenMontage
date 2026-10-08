@@ -289,8 +289,16 @@ interface Cut {
   companionImage?: string;
   companionLabel?: string;
   companionAtSeconds?: number;
+  eyebrow?: string;
+  bestFor?: string;
+  // Light-background styling shared by chip_spotlight and letter_grid
+  cardBorderColor?: string; // divider / tile border; defaults to the dark-theme faint white
+  shadowOpacity?: number;
+  hideGlow?: boolean;
   // Letter grid props (type: "letter_grid")
   tiles?: LetterTile[];
+  footer?: string;
+  footerAtSeconds?: number;
 }
 
 interface Overlay {
@@ -682,16 +690,23 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
   if (cut.type === "chip_spotlight" && cut.image && cut.chipName && cut.specs) {
     return maybeWrapWithBg(
       <ChipSpotlight
-        image={cut.image} chipName={cut.chipName} tagline={cut.tagline} specs={cut.specs}
-        radios={cut.radios} companionImage={cut.companionImage} companionLabel={cut.companionLabel} companionAtSeconds={cut.companionAtSeconds}
+        image={cut.image} chipName={cut.chipName} eyebrow={cut.eyebrow} tagline={cut.tagline} specs={cut.specs}
+        radios={cut.radios} bestFor={cut.bestFor}
+        companionImage={cut.companionImage} companionLabel={cut.companionLabel} companionAtSeconds={cut.companionAtSeconds}
         textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
+        surfaceColor={cut.cardBackgroundColor} dividerColor={cut.cardBorderColor}
+        shadowOpacity={cut.shadowOpacity} hideGlow={cut.hideGlow}
       />
     );
   }
 
   if (cut.type === "letter_grid" && cut.tiles) {
     return maybeWrapWithBg(
-      <LetterGrid tiles={cut.tiles} title={cut.title} textColor={textColor} accentColor={accent} />
+      <LetterGrid
+        tiles={cut.tiles} title={cut.title} textColor={textColor} accentColor={accent}
+        surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} mutedColor={theme.mutedTextColor}
+        footer={cut.footer} footerAtSeconds={cut.footerAtSeconds}
+      />
     );
   }
 
