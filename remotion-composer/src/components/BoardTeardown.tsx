@@ -23,6 +23,8 @@ export interface TeardownSpot {
   /** Short status line under the detail. */
   note?: string;
   noteTone?: "good" | "bad";
+  /** Light a glow over the region centre that toggles on/off, like a blinking LED (starts "on" at the spot). */
+  blink?: { color?: string; periodSeconds?: number };
 }
 
 interface BoardTeardownProps {
@@ -167,6 +169,31 @@ export const BoardTeardown: React.FC<BoardTeardownProps> = ({
             }}
           />
         )}
+        {r && spot.blink && (() => {
+          // LED toggles every periodSeconds (the ESP-IDF blink example toggles every CONFIG_BLINK_PERIOD ms).
+          const period = Math.max(1, Math.round((spot.blink.periodSeconds ?? 1) * fps));
+          const t = frame - starts[idx];
+          const on = Math.floor(t / period) % 2 === 0;
+          const edge = Math.min(t % period, period - (t % period));
+          const level = boxIn * (on ? interpolate(edge, [0, 2], [0.4, 1], { extrapolateRight: "clamp" }) : 0);
+          const color = spot.blink.color ?? "#FFFFFF";
+          const d = Math.max(r.w, r.h) * cam.scale * 1.6;
+          return (
+            <div
+              style={{
+                position: "absolute",
+                left: cam.ox + (r.x + r.w / 2) * cam.scale - d / 2,
+                top: cam.oy + (r.y + r.h / 2) * cam.scale - d / 2,
+                width: d,
+                height: d,
+                borderRadius: "50%",
+                background: `radial-gradient(circle, ${color} 0%, ${color} 14%, ${color}AA 26%, ${color}33 48%, transparent 70%)`,
+                mixBlendMode: "screen",
+                opacity: level,
+              }}
+            />
+          );
+        })()}
       </div>
 
       <div
