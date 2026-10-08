@@ -114,6 +114,9 @@ point of the default background.
   and never runs a model on this machine. If the server is unreachable or not `ready`,
   stop and report it as a blocker — do not fall back to Piper or any other TTS without approval.
 - Output is not deterministic: when one section must be redone, regenerate all sections together.
+- **Closing line:** the last spoken sentence of every video is, verbatim:
+  "Nếu có vấn đề cần giải thích về ESP, bạn có thể nhắn tin trực tiếp cho tôi."
+  Put it at the end of the final script section, after any other call to action.
 
 ### Sync (visuals ↔ narration)
 
