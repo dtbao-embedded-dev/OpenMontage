@@ -14,6 +14,12 @@ interface LetterGridProps {
   textColor?: string;
   accentColor?: string;
   surfaceColor?: string;
+  /** Tile border; dark-theme default is a faint white line. */
+  borderColor?: string;
+  mutedColor?: string;
+  /** Closing line shown under the grid (e.g. a call to action). */
+  footer?: string;
+  footerAtSeconds?: number;
 }
 
 const FONT = "Inter, 'Segoe UI', system-ui, sans-serif";
@@ -24,17 +30,26 @@ export const LetterGrid: React.FC<LetterGridProps> = ({
   textColor = "#FFFFFF",
   accentColor = "#E94560",
   surfaceColor = "rgba(255,255,255,0.05)",
+  borderColor = "rgba(255,255,255,0.12)",
+  mutedColor = "#94A3B8",
+  footer,
+  footerAtSeconds,
 }) => {
   const frame = useCurrentFrame();
   const { fps, width, height } = useVideoConfig();
-  // Portrait frames wrap the tiles into a 2x2 grid.
+  // Portrait frames wrap the tiles into two columns; more than four tiles get
+  // shorter tiles so three rows still fit the TikTok safe area (y 220-1520).
   const portrait = height > width;
-  const tileW = portrait ? 420 : 340;
-  const tileH = portrait ? 440 : 400;
+  const dense = portrait && tiles.length > 4;
+  const tileW = portrait ? (dense ? 380 : 420) : 340;
+  const tileH = portrait ? (dense ? 300 : 440) : 400;
+  const letterSize = dense ? 130 : 200;
   const titleIn = spring({ frame, fps, config: { damping: 18 } });
 
   return (
-    <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", fontFamily: FONT }}>
+    <AbsoluteFill
+      style={{ justifyContent: "center", alignItems: "center", fontFamily: FONT, padding: portrait ? "220px 160px 400px 88px" : undefined }}
+    >
       {title && (
         <div style={{ fontSize: 44, fontWeight: 700, color: textColor, marginBottom: 56, opacity: titleIn }}>
           {title}
@@ -52,7 +67,7 @@ export const LetterGrid: React.FC<LetterGridProps> = ({
                 height: tileH,
                 borderRadius: 28,
                 background: surfaceColor,
-                border: "1.5px solid rgba(255,255,255,0.12)",
+                border: `1.5px solid ${borderColor}`,
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
@@ -61,7 +76,7 @@ export const LetterGrid: React.FC<LetterGridProps> = ({
                 transform: `translateY(${interpolate(p, [0, 1], [60, 0])}px) scale(${interpolate(p, [0, 1], [0.9, 1])})`,
               }}
             >
-              <div style={{ fontSize: 200, fontWeight: 800, color: accentColor, lineHeight: 1 }}>{t.letter}</div>
+              <div style={{ fontSize: letterSize, fontWeight: 800, letterSpacing: "-0.02em", color: accentColor, lineHeight: 1 }}>{t.letter}</div>
               <div style={{ fontSize: 34, fontWeight: 600, color: textColor, marginTop: 24, textAlign: "center", padding: "0 20px" }}>
                 {t.label}
               </div>
@@ -69,6 +84,15 @@ export const LetterGrid: React.FC<LetterGridProps> = ({
           );
         })}
       </div>
+      {footer && (() => {
+        const start = footerAtSeconds !== undefined ? Math.round(footerAtSeconds * fps) : 6 + tiles.length * 8;
+        const p = spring({ frame: frame - start, fps, config: { damping: 18 } });
+        return (
+          <div style={{ marginTop: 44, fontSize: 40, fontWeight: 600, color: mutedColor, opacity: p, textAlign: "center" }}>
+            {footer}
+          </div>
+        );
+      })()}
     </AbsoluteFill>
   );
 };
