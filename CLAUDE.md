@@ -47,6 +47,19 @@ A brief that explicitly asks for something different overrides a rule; say so wh
   `<topic>-<YYYYMMDD-HHMM>.mp4` name. The user reviews only what is in `release` — a render
   not copied there is not delivered.
 
+### Intro card
+
+- Every video opens on the brand intro card
+  `E:\Baotd\media\brand\tiktok-intro-esp32-chia-se-kien-thuc-1080x1920.png`
+  ("Lập trình nhúng · IoT / ESP32 / Chia sẻ kiến thức" above an ESP32-S3 board).
+- 1.5 s, music only; the narration starts after it (shift the first section by the intro length).
+  It doubles as the TikTok cover frame, so it must be at full opacity on frame 0.
+- Copy it into `projects/<project>/assets/images/` (and the render `public_dir`), then add it as
+  the first cut: `{"type": "image", "source": "<file>", "animation": "static",
+  "transition_in": "cut", "vignette": false, "backgroundColor": "#FAFCFF"}`, fading out into
+  the first scene. Without `transition_in: "cut"` / `vignette: false` it fades in from a dark
+  frame under a dark vignette.
+
 ### Background
 
 - **Default background:** `E:\Baotd\media\brand\tiktok-bg-light-plain-1080x1920.png` — plain light
