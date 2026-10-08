@@ -275,6 +275,7 @@ interface Cut {
   // Terminal scene props (type: "terminal_scene")
   steps?: TerminalStep[];
   terminalTitle?: string;
+  terminalHeight?: number | string; // window height; fontSize sets the body text size
   prompt?: string;
   // Screenshot scene props (type: "screenshot_scene")
   screenshotSteps?: ScreenshotStep[];
@@ -674,6 +675,8 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         prompt={cut.prompt}
         accentColor={accent}
         backgroundColor={bgColor || theme.backgroundColor}
+        fontSize={cut.fontSize}
+        windowHeight={cut.terminalHeight}
       />
     );
   }
