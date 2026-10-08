@@ -61,8 +61,8 @@ const FONT = "Inter, 'Segoe UI', system-ui, sans-serif";
 const RADIO_LABEL: Record<RadioBadge, string> = {
   wifi4: "Wi-Fi 4",
   wifi6: "Wi-Fi 6",
-  "wifi6-5g": "Wi-Fi 6 · 5 GHz",
-  wifi6e: "Wi-Fi 6E · 6 GHz",
+  "wifi6-5g": "Wi-Fi 6 · 2.4 + 5 GHz",
+  wifi6e: "Wi-Fi 6E · 2.4/5/6 GHz",
   ble: "Bluetooth LE",
   "bt-classic": "BT Classic",
   "le-audio": "LE Audio",
