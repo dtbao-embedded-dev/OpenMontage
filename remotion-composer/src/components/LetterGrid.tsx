@@ -6,6 +6,8 @@ export interface LetterTile {
   label: string;
   /** Seconds after cut start when this tile appears (sync to narration). */
   atSeconds?: number;
+  /** Letter colour for this tile; defaults to the accent colour. */
+  color?: string;
 }
 
 interface LetterGridProps {
@@ -41,7 +43,7 @@ export const LetterGrid: React.FC<LetterGridProps> = ({
   // shorter tiles so three rows still fit the TikTok safe area (y 220-1520).
   const portrait = height > width;
   const dense = portrait && tiles.length > 4;
-  const tileW = portrait ? (dense ? 380 : 420) : 340;
+  const tileW = portrait ? (dense ? 380 : 390) : 340;
   const tileH = portrait ? (dense ? 300 : 440) : 400;
   const letterSize = dense ? 130 : 200;
   const titleIn = spring({ frame, fps, config: { damping: 18 } });
@@ -76,7 +78,7 @@ export const LetterGrid: React.FC<LetterGridProps> = ({
                 transform: `translateY(${interpolate(p, [0, 1], [60, 0])}px) scale(${interpolate(p, [0, 1], [0.9, 1])})`,
               }}
             >
-              <div style={{ fontSize: letterSize, fontWeight: 800, letterSpacing: "-0.02em", color: accentColor, lineHeight: 1 }}>{t.letter}</div>
+              <div style={{ fontSize: letterSize, fontWeight: 800, letterSpacing: "-0.02em", color: t.color ?? accentColor, lineHeight: 1 }}>{t.letter}</div>
               <div style={{ fontSize: 34, fontWeight: 600, color: textColor, marginTop: 24, textAlign: "center", padding: "0 20px" }}>
                 {t.label}
               </div>
