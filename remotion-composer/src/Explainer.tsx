@@ -44,6 +44,8 @@ import { CodeCompare } from "./components/CodeCompare";
 import type { CodePoint, CodeLayer } from "./components/CodeCompare";
 import { CoreTimeline } from "./components/CoreTimeline";
 import type { TimelineLane, TimelineLog } from "./components/CoreTimeline";
+import { WifiTopology } from "./components/WifiTopology";
+import type { TopologyLink, TopologyNode, TopologyRange } from "./components/WifiTopology";
 import { resolveAsset } from "./lib/resolveAsset";
 import type { ParticleType } from "./components/ParticleOverlay";
 import { resolveTheme, type ThemeConfig, DEFAULT_THEME } from "./Root";
@@ -343,6 +345,11 @@ interface Cut {
   units?: number;
   axisLabel?: string;
   timelineLog?: TimelineLog;
+  // Wi-Fi topology props (type: "wifi_topology"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`, `timelineLog`)
+  nodes?: TopologyNode[];
+  links?: TopologyLink[];
+  ranges?: TopologyRange[];
+  diagramHeight?: number;
 }
 
 interface Overlay {
@@ -795,6 +802,18 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
       <CoreTimeline
         name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline}
         lanes={cut.lanes} units={cut.units} axisLabel={cut.axisLabel} points={cut.points} log={cut.timelineLog}
+        textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
+        surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
+      />
+    );
+  }
+
+  if (cut.type === "wifi_topology" && cut.name && cut.nodes) {
+    return maybeWrapWithBg(
+      <WifiTopology
+        name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline}
+        nodes={cut.nodes} links={cut.links} ranges={cut.ranges} diagramHeight={cut.diagramHeight}
+        points={cut.points} log={cut.timelineLog}
         textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
         surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
       />
