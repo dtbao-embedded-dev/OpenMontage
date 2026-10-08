@@ -22,6 +22,9 @@ interface LetterGridProps {
   /** Closing line shown under the grid (e.g. a call to action). */
   footer?: string;
   footerAtSeconds?: number;
+  /** Portrait layout: "safe" (default) pads into the TikTok safe area; "centered" centres on the frame
+   *  with even 120 px side margins. */
+  layout?: "safe" | "centered";
 }
 
 const FONT = "Inter, 'Segoe UI', system-ui, sans-serif";
@@ -36,6 +39,7 @@ export const LetterGrid: React.FC<LetterGridProps> = ({
   mutedColor = "#94A3B8",
   footer,
   footerAtSeconds,
+  layout = "safe",
 }) => {
   const frame = useCurrentFrame();
   const { fps, width, height } = useVideoConfig();
@@ -54,7 +58,7 @@ export const LetterGrid: React.FC<LetterGridProps> = ({
 
   return (
     <AbsoluteFill
-      style={{ justifyContent: "center", alignItems: "center", fontFamily: FONT, padding: portrait ? "220px 160px 400px 88px" : undefined }}
+      style={{ justifyContent: "center", alignItems: "center", fontFamily: FONT, padding: portrait ? (layout === "centered" ? "0 120px" : "220px 160px 400px 88px") : undefined }}
     >
       {title && (
         <div style={{ fontSize: 44, fontWeight: 700, color: textColor, marginBottom: 56, opacity: titleIn }}>
