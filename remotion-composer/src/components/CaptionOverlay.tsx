@@ -116,8 +116,11 @@ const PageRenderer: React.FC<{
                   // Keep each word unbroken so lines wrap only at word
                   // boundaries. For space-delimited text this matches the
                   // previous behavior; for CJK it prevents mid-word breaks.
+                  // "pre" (not "nowrap"): an inline-block strips its own
+                  // trailing whitespace under nowrap, which glued every word
+                  // to the next. "pre" keeps the separator and still never wraps.
                   display: "inline-block",
-                  whiteSpace: "nowrap",
+                  whiteSpace: "pre",
                   color: isActive ? highlightColor : isPast ? color : `${color}99`,
                   transition: "none", // CSS transitions forbidden in Remotion
                   textShadow: isActive
