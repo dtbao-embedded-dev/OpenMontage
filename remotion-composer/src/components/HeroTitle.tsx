@@ -72,7 +72,7 @@ export const HeroTitle: React.FC<HeroTitleProps> = ({
           style={{
             fontSize: titleFontSize,
             fontWeight: 800,
-            fontFamily: "Space Grotesk, Inter, system-ui, sans-serif",
+            fontFamily: "inherit",
             lineHeight: 1.2,
             display: "flex",
             justifyContent: "center",
@@ -125,7 +125,7 @@ export const HeroTitle: React.FC<HeroTitleProps> = ({
               fontSize: 28,
               fontWeight: 400,
               color: subtitleColor,
-              fontFamily: "Space Grotesk, Inter, system-ui, sans-serif",
+              fontFamily: "inherit",
               letterSpacing: "0.1em",
               textTransform: "uppercase",
             }}
