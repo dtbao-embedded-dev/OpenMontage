@@ -129,7 +129,11 @@ export const LogicWave: React.FC<LogicWaveProps> = ({
     const hasMarkers = (pn.markers ?? []).some((m) => m.label);
     // Heading row, then a row for the numbered marker discs, so neither overlaps the trace.
     const top = (pn.label ? 64 : 24) + (hasMarkers ? 64 : 0);
-    const bottom = (pn.spans ?? []).length ? 76 : 24;
+    // A span label that would run past the right edge is drawn centred under its bracket instead, which needs more room.
+    const spanW = (label: string) => label.length * 34 * 0.56;
+    const X0 = (x: number) => LEFT + x * (W - LEFT - 30);
+    const spanBelow = (sp: WaveSpan) => X0(sp.x1) + 16 + spanW(sp.label) > W;
+    const bottom = (pn.spans ?? []).length ? ((pn.spans ?? []).some(spanBelow) ? 120 : 76) : 24;
     const plotH = H - top - bottom;
     const yMin = pn.yMin ?? 0;
     const X = (x: number) => LEFT + x * (W - LEFT - 30);
@@ -239,7 +243,11 @@ export const LogicWave: React.FC<LogicWaveProps> = ({
               <line x1={0} y1={30} x2={0} y2={plotH + 36} stroke={c} strokeWidth={3} strokeDasharray="6 8" />
               {m.label && (
                 <>
-                  <circle cx={0} cy={0} r={28} fill={c} />
+                  {m.label.length > 2 ? (
+                    <rect x={-(m.label.length * 32 * 0.58 + 36) / 2} y={-28} width={m.label.length * 32 * 0.58 + 36} height={56} rx={28} fill={c} />
+                  ) : (
+                    <circle cx={0} cy={0} r={28} fill={c} />
+                  )}
                   <text x={0} y={11} textAnchor="middle" fontFamily={FONT} fontSize={32} fontWeight={700} fill="#FFFFFF">
                     {m.label}
                   </text>
@@ -258,7 +266,11 @@ export const LogicWave: React.FC<LogicWaveProps> = ({
               <line x1={X(s.x0)} y1={y} x2={X(s.x1)} y2={y} stroke={c} strokeWidth={4} />
               <line x1={X(s.x0)} y1={y - 14} x2={X(s.x0)} y2={y + 14} stroke={c} strokeWidth={4} />
               <line x1={X(s.x1)} y1={y - 14} x2={X(s.x1)} y2={y + 14} stroke={c} strokeWidth={4} />
-              <text x={X(s.x1) + 16} y={y + 12} fontFamily={FONT} stroke="#FFFFFF" strokeWidth={8} paintOrder="stroke" strokeLinejoin="round" fontSize={34} fontWeight={700} fill={c}>
+              <text
+                x={spanBelow(s) ? (X(s.x0) + X(s.x1)) / 2 : X(s.x1) + 16}
+                y={spanBelow(s) ? y + 52 : y + 12}
+                textAnchor={spanBelow(s) ? "middle" : "start"}
+                fontFamily={FONT} stroke="#FFFFFF" strokeWidth={8} paintOrder="stroke" strokeLinejoin="round" fontSize={34} fontWeight={700} fill={c}>
                 {s.label}
               </text>
             </g>
