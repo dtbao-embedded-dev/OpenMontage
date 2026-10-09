@@ -10,8 +10,10 @@ export interface CircuitPart {
    * wire: polyline `points`; resistor / button: two-terminal part from `from` to `to`;
    * ground / rail / dot / cross / tag / label: drawn at `at`; block: rounded box with top-left `at` and size `w` x `h`;
    * pin: small square on a block edge at `at`, its `text` drawn on the `textAt` side.
+   * potentiometer / ldr / capacitor: two-terminal parts from `from` to `to` like a resistor.
+   * potentiometer: the wiper arrow points at the body from the `wiperSide`, its tail wired to `at` (the wiper terminal).
    */
-  kind: "wire" | "resistor" | "button" | "ground" | "rail" | "block" | "pin" | "tag" | "cross" | "dot" | "label";
+  kind: "wire" | "resistor" | "button" | "ground" | "rail" | "block" | "pin" | "tag" | "cross" | "dot" | "label" | "potentiometer" | "ldr" | "capacitor";
   points?: Pt[];
   from?: Pt;
   to?: Pt;
@@ -35,6 +37,10 @@ export interface CircuitPart {
   pressed?: [number, number][];
   /** wire: current-flow dots travel along the wire in this window. */
   flow?: { atSeconds: number; untilSeconds?: number; reverse?: boolean };
+  /** potentiometer: side of the body (seen from `from` towards `to`) the wiper arrow comes from. Default "right". */
+  wiperSide?: "left" | "right";
+  /** potentiometer: wiper position over time as [seconds, fraction 0..1 from `from` to `to`]; default 0.5 throughout. */
+  wiperTrack?: [number, number][];
 }
 
 interface CircuitDiagramProps {
@@ -163,6 +169,120 @@ export const CircuitDiagram: React.FC<CircuitDiagramProps> = ({
             strokeDashoffset={p.dashed ? 0 : L * (1 - draw)}
           />
           {dots}
+        </g>
+      );
+    }
+
+    if (p.kind === "potentiometer" && p.from && p.to && p.at) {
+      const [x1, y1] = p.from;
+      const [x2, y2] = p.to;
+      const L = Math.hypot(x2 - x1, y2 - y1);
+      const ux = (x2 - x1) / L;
+      const uy = (y2 - y1) / L;
+      // Normal pointing to the wiper side ("right" of the from->to direction in screen coordinates).
+      const side = p.wiperSide === "left" ? -1 : 1;
+      const nx = -uy * side;
+      const ny = ux * side;
+      const bl = Math.min(240, L * 0.7);
+      const b0 = (L - bl) / 2;
+      const track = p.wiperTrack ?? [];
+      let f = 0.5;
+      if (track.length === 1) f = track[0][1];
+      if (track.length > 1) {
+        f = interpolate(frame, track.map(([s]) => sec(s)), track.map(([, v]) => v), { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+      }
+      const along0 = b0 + bl * (0.12 + 0.76 * f);
+      const tip: Pt = [x1 + ux * along0 + nx * 30, y1 + uy * along0 + ny * 30];
+      const tail: Pt = [tip[0] + nx * 80, tip[1] + ny * 80];
+      const [ax, ay] = p.at;
+      // Elbow at the midpoint between the arrow tail and the wiper terminal, so the wire never runs along a block edge.
+      const wire =
+        Math.abs(nx) > 0.5
+          ? `M${tail[0]},${tail[1]} L${(tail[0] + ax) / 2},${tail[1]} L${(tail[0] + ax) / 2},${ay} L${ax},${ay}`
+          : `M${tail[0]},${tail[1]} L${tail[0]},${(tail[1] + ay) / 2} L${ax},${(tail[1] + ay) / 2} L${ax},${ay}`;
+      const ang = (Math.atan2(y2 - y1, x2 - x1) * 180) / Math.PI;
+      const mid: Pt = [(x1 + x2) / 2, (y1 + y2) / 2];
+      const t = textAnchor(p.textAt ?? (side > 0 ? "left" : "right"), mid, 50);
+      const ah = 22;
+      return (
+        <g key={i} opacity={o}>
+          <g transform={`translate(${x1},${y1}) rotate(${ang})`}>
+            <line x1={0} y1={0} x2={b0} y2={0} stroke={ink} strokeWidth={STROKE} strokeLinecap="round" />
+            <rect x={b0} y={-24} width={bl} height={48} rx={6} fill="#FFFFFF" stroke={ink} strokeWidth={STROKE} />
+            <line x1={b0 + bl} y1={0} x2={L} y2={0} stroke={ink} strokeWidth={STROKE} strokeLinecap="round" />
+          </g>
+          <path d={wire} fill="none" stroke={accentColor} strokeWidth={STROKE} strokeLinecap="round" strokeLinejoin="round" />
+          <line x1={tail[0]} y1={tail[1]} x2={tip[0] + nx * ah} y2={tip[1] + ny * ah} stroke={accentColor} strokeWidth={STROKE} strokeLinecap="round" />
+          <polygon
+            points={`${tip[0]},${tip[1]} ${tip[0] + nx * ah + ux * 14},${tip[1] + ny * ah + uy * 14} ${tip[0] + nx * ah - ux * 14},${tip[1] + ny * ah - uy * 14}`}
+            fill={accentColor}
+          />
+          {p.text && (
+            <text x={t.x} y={t.y + (p.sub ? -6 : fs * 0.35)} textAnchor={t.anchor} fontFamily={FONT} fontSize={fs} fontWeight={700} fill={ink}>
+              {p.text}
+            </text>
+          )}
+          {p.sub && (
+            <text x={t.x} y={t.y + fs * 0.35 + 34} textAnchor={t.anchor} fontFamily={FONT} fontSize={34} fontWeight={400} fill={mutedColor}>
+              {p.sub}
+            </text>
+          )}
+        </g>
+      );
+    }
+
+    if ((p.kind === "ldr" || p.kind === "capacitor") && p.from && p.to) {
+      const [x1, y1] = p.from;
+      const [x2, y2] = p.to;
+      const L = Math.hypot(x2 - x1, y2 - y1);
+      const ang = (Math.atan2(y2 - y1, x2 - x1) * 180) / Math.PI;
+      const mid: Pt = [(x1 + x2) / 2, (y1 + y2) / 2];
+      const t = textAnchor(p.textAt, mid, p.kind === "ldr" ? 60 : 70);
+      let body: React.ReactNode;
+      if (p.kind === "ldr") {
+        // Resistor body inside a circle, two light arrows coming in from the -y side.
+        const bl = Math.min(120, L * 0.5);
+        const arrow = (ox: number) => (
+          <g key={ox} stroke={accentColor} strokeWidth={4} strokeLinecap="round" fill={accentColor}>
+            <line x1={ox - 46} y1={-110} x2={ox - 8} y2={-58} />
+            <polygon points={`${ox},${-46} ${ox - 22},${-58} ${ox - 6},${-72}`} stroke="none" />
+          </g>
+        );
+        body = (
+          <>
+            <line x1={0} y1={0} x2={(L - bl) / 2} y2={0} stroke={ink} strokeWidth={STROKE} strokeLinecap="round" />
+            <circle cx={L / 2} cy={0} r={bl / 2 + 16} fill="#FFFFFF" stroke={ink} strokeWidth={4} />
+            <rect x={(L - bl) / 2} y={-20} width={bl} height={40} rx={6} fill="#FFFFFF" stroke={ink} strokeWidth={STROKE} />
+            <line x1={(L + bl) / 2} y1={0} x2={L} y2={0} stroke={ink} strokeWidth={STROKE} strokeLinecap="round" />
+            {arrow(L / 2 - 20)}
+            {arrow(L / 2 + 30)}
+          </>
+        );
+      } else {
+        const gap = 26;
+        const plate = 90;
+        body = (
+          <>
+            <line x1={0} y1={0} x2={(L - gap) / 2} y2={0} stroke={ink} strokeWidth={STROKE} strokeLinecap="round" />
+            <line x1={(L - gap) / 2} y1={-plate / 2} x2={(L - gap) / 2} y2={plate / 2} stroke={ink} strokeWidth={STROKE + 2} strokeLinecap="round" />
+            <line x1={(L + gap) / 2} y1={-plate / 2} x2={(L + gap) / 2} y2={plate / 2} stroke={ink} strokeWidth={STROKE + 2} strokeLinecap="round" />
+            <line x1={(L + gap) / 2} y1={0} x2={L} y2={0} stroke={ink} strokeWidth={STROKE} strokeLinecap="round" />
+          </>
+        );
+      }
+      return (
+        <g key={i} opacity={o}>
+          <g transform={`translate(${x1},${y1}) rotate(${ang})`}>{body}</g>
+          {p.text && (
+            <text x={t.x} y={t.y + (p.sub ? -6 : fs * 0.35)} textAnchor={t.anchor} fontFamily={FONT} fontSize={fs} fontWeight={700} fill={ink}>
+              {p.text}
+            </text>
+          )}
+          {p.sub && (
+            <text x={t.x} y={t.y + fs * 0.35 + 34} textAnchor={t.anchor} fontFamily={FONT} fontSize={34} fontWeight={400} fill={mutedColor}>
+              {p.sub}
+            </text>
+          )}
         </g>
       );
     }
