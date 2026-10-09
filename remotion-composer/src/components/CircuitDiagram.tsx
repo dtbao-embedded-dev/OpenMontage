@@ -16,6 +16,15 @@ export interface CircuitPart {
    * buzzer: two-terminal disc from `from` to `to`; sound arcs pulse on the `wiperSide` during `sounding` windows.
    * servo: top view with top-left `at` and size `w` x `h`; the horn turns to `angleTrack` degrees (0 = up, +90 = right).
    * pwm: mini scope trace with top-left `at` and size `w` x `h`; `periods` square-wave cycles at the `dutyTrack` duty.
+   * diode / lamp / ac / motor / fuse: two-terminal parts from `from` to `to` (diode: anode -> cathode).
+   * lamp glow follows `levelTrack` (default off); motor spins and diode lights up during `active` windows.
+   * relay: package outline with top-left `at`, size `w` x `h` (default 420 x 340); terminals coil A1 [x+0.25w, y],
+   * A2 [x+0.25w, y+h], NC [x+0.55w, y], NO [x+0.9w, y], COM [x+0.72w, y+h]; the arm moves from NC to NO during `active`.
+   * npn / nmos: centred on `at`; terminals base/gate [x-110, y], collector/drain [x+32, y-110], emitter/source [x+32, y+110];
+   * the switched path turns accent during `active`.
+   * opto / ssr: package with top-left `at`, size `w` x `h` (default 300 x 260 / 360 x 260); input pins on the left edge at
+   * 0.25h / 0.75h (opto) or 0.3h / 0.7h (ssr), output pins at the same heights on the right edge; lit during `active`.
+   * hazard: electrical warning triangle centred on `at`, side `w` (default 200).
    */
   kind:
     | "wire"
@@ -35,7 +44,18 @@ export interface CircuitPart {
     | "led"
     | "buzzer"
     | "servo"
-    | "pwm";
+    | "pwm"
+    | "diode"
+    | "lamp"
+    | "ac"
+    | "motor"
+    | "fuse"
+    | "relay"
+    | "npn"
+    | "nmos"
+    | "opto"
+    | "ssr"
+    | "hazard";
   points?: Pt[];
   from?: Pt;
   to?: Pt;
@@ -82,6 +102,10 @@ export interface CircuitPart {
   /** pwm: live readout drawn above the trace's right end: duty in percent, or pulse width in ms (needs `periodMs`). */
   readout?: "percent" | "ms";
   periodMs?: number;
+  /** relay / npn / nmos / opto / ssr / motor / diode: [start, end] seconds when the part is switched on (conducts, spins). */
+  active?: [number, number][];
+  /** relay / npn / nmos / opto / ssr: draw the small terminal names (COM, NO, NC, B, C, E, G, D, S, +, −). Default true. */
+  terminalLabels?: boolean;
 }
 
 interface CircuitDiagramProps {
@@ -171,6 +195,28 @@ export const CircuitDiagram: React.FC<CircuitDiagramProps> = ({
     const frames: number[] = [];
     for (const [s] of track) frames.push(Math.max(sec(s), frames.length ? frames[frames.length - 1] + 1 : -Infinity));
     return interpolate(frame, frames, track.map(([, v]) => v), { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  };
+
+  /** 0..1 switch state from [start, end] windows: on in 3 frames when a window starts, off in 3 frames when it ends. */
+  const windowLevel = (windows: [number, number][] | undefined) => {
+    let v = 0;
+    for (const [a, b] of windows ?? []) {
+      const c = Math.min(
+        interpolate(frame, [sec(a), sec(a) + 3], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
+        interpolate(frame, [sec(b), sec(b) + 3], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
+      );
+      v = Math.max(v, c);
+    }
+    return v;
+  };
+
+  /** Filled arrow head with its tip at `tip`, pointing along `dir`. */
+  const arrowHead = (tip: Pt, dir: Pt, size: number, fill: string, key?: string | number) => {
+    const L = Math.hypot(dir[0], dir[1]) || 1;
+    const [ux, uy] = [dir[0] / L, dir[1] / L];
+    const [bx, by] = [tip[0] - ux * size, tip[1] - uy * size];
+    const hw = size * 0.55;
+    return <polygon key={key} points={`${tip[0]},${tip[1]} ${bx - uy * hw},${by + ux * hw} ${bx + uy * hw},${by - ux * hw}`} fill={fill} />;
   };
 
   const textAnchor = (side: CircuitPart["textAt"], [x, y]: Pt, off: number): { x: number; y: number; anchor: "start" | "middle" | "end" } => {
@@ -443,6 +489,125 @@ export const CircuitDiagram: React.FC<CircuitDiagramProps> = ({
       );
     }
 
+    if ((p.kind === "diode" || p.kind === "lamp" || p.kind === "ac" || p.kind === "motor" || p.kind === "fuse") && p.from && p.to) {
+      const [x1, y1] = p.from;
+      const [x2, y2] = p.to;
+      const L = Math.hypot(x2 - x1, y2 - y1);
+      const ang = (Math.atan2(y2 - y1, x2 - x1) * 180) / Math.PI;
+      const mid: Pt = [(x1 + x2) / 2, (y1 + y2) / 2];
+      const on = windowLevel(p.active);
+      const R = 52;
+      const lead = (a: number, b: number) => <line x1={a} y1={0} x2={b} y2={0} stroke={ink} strokeWidth={STROKE} strokeLinecap="round" />;
+      let glow: React.ReactNode = null;
+      let body: React.ReactNode;
+      let upright: React.ReactNode = null; // symbol content that must not rotate with the part (letters)
+      let off = R + 34;
+      if (p.kind === "diode") {
+        // Triangle from anode to cathode bar; fills with the accent while it conducts (`active`).
+        const tw = 60;
+        const a = (L - tw) / 2;
+        const c = on > 0.5 ? accentColor : ink;
+        off = 62;
+        body = (
+          <>
+            {lead(0, a)}
+            <polygon points={`${a},${-34} ${a},${34} ${a + tw},0`} fill={accentColor} fillOpacity={0.85 * on} stroke={c} strokeWidth={STROKE} strokeLinejoin="round" />
+            <line x1={a + tw} y1={-36} x2={a + tw} y2={36} stroke={c} strokeWidth={STROKE + 1} strokeLinecap="round" />
+            {lead(a + tw, L)}
+          </>
+        );
+      } else if (p.kind === "fuse") {
+        const bl = Math.min(130, L * 0.6);
+        off = 50;
+        body = (
+          <>
+            {lead(0, (L - bl) / 2)}
+            <rect x={(L - bl) / 2} y={-22} width={bl} height={44} rx={6} fill="#FFFFFF" stroke={ink} strokeWidth={STROKE} />
+            <line x1={(L - bl) / 2} y1={0} x2={(L + bl) / 2} y2={0} stroke={ink} strokeWidth={3} />
+            {lead((L + bl) / 2, L)}
+          </>
+        );
+      } else {
+        // Circle symbols: lamp (IEC cross, warm glow by level), ac source (sine), motor (M, spinning arc while active).
+        let inner: React.ReactNode = null;
+        if (p.kind === "lamp") {
+          const level = Math.max(0, Math.min(1, trackAt(p.levelTrack, 0)));
+          const lit = p.color ?? "#FFB020";
+          const gid = `lamp-glow-${i}-${Math.round(x1)}-${Math.round(y1)}`;
+          glow = (
+            <g>
+              <defs>
+                <radialGradient id={gid}>
+                  <stop offset="0%" stopColor={lit} stopOpacity={0.9 * level} />
+                  <stop offset="45%" stopColor={lit} stopOpacity={0.4 * level} />
+                  <stop offset="100%" stopColor={lit} stopOpacity={0} />
+                </radialGradient>
+              </defs>
+              <circle cx={mid[0]} cy={mid[1]} r={R + 20 + 120 * level} fill={`url(#${gid})`} />
+            </g>
+          );
+          const d = R * 0.7;
+          inner = (
+            <>
+              <circle cx={L / 2} cy={0} r={R} fill={lit} fillOpacity={0.1 + 0.8 * level} stroke={ink} strokeWidth={STROKE} />
+              <line x1={L / 2 - d} y1={-d} x2={L / 2 + d} y2={d} stroke={ink} strokeWidth={4} strokeLinecap="round" />
+              <line x1={L / 2 - d} y1={d} x2={L / 2 + d} y2={-d} stroke={ink} strokeWidth={4} strokeLinecap="round" />
+            </>
+          );
+        } else {
+          inner = <circle cx={L / 2} cy={0} r={R} fill="#FFFFFF" stroke={ink} strokeWidth={STROKE} />;
+        }
+        body = (
+          <>
+            {lead(0, L / 2 - R)}
+            {inner}
+            {lead(L / 2 + R, L)}
+          </>
+        );
+        if (p.kind === "ac") {
+          const pts = Array.from({ length: 25 }, (_, k) => {
+            const t = k / 24;
+            return `${k ? "L" : "M"}${mid[0] - 30 + 60 * t},${mid[1] - 16 * Math.sin(t * 2 * Math.PI)}`;
+          }).join(" ");
+          upright = <path d={pts} fill="none" stroke={ink} strokeWidth={4} strokeLinecap="round" />;
+        }
+        if (p.kind === "motor") {
+          const spin = on > 0.01 ? ((frame / fps) * 360 * 1.5) % 360 : 0;
+          upright = (
+            <>
+              <text x={mid[0]} y={mid[1] + 17} textAnchor="middle" fontFamily={FONT} fontSize={48} fontWeight={700} fill={ink}>
+                M
+              </text>
+              {on > 0.01 && (
+                <g opacity={on} transform={`rotate(${spin} ${mid[0]} ${mid[1]})`}>
+                  <path d={`M${mid[0] + R + 16},${mid[1]} A${R + 16},${R + 16} 0 0 1 ${mid[0]},${mid[1] + R + 16}`} fill="none" stroke={accentColor} strokeWidth={5} strokeLinecap="round" />
+                  {arrowHead([mid[0] - 4, mid[1] + R + 16], [-1, 0], 20, accentColor)}
+                </g>
+              )}
+            </>
+          );
+        }
+      }
+      const t = textAnchor(p.textAt ?? "left", mid, off);
+      return (
+        <g key={i} opacity={o}>
+          {glow}
+          <g transform={`translate(${x1},${y1}) rotate(${ang})`}>{body}</g>
+          {upright}
+          {p.text && (
+            <text x={t.x} y={t.y + (p.sub ? -6 : fs * 0.35)} textAnchor={t.anchor} fontFamily={FONT} fontSize={fs} fontWeight={700} fill={ink}>
+              {p.text}
+            </text>
+          )}
+          {p.sub && (
+            <text x={t.x} y={t.y + fs * 0.35 + 34} textAnchor={t.anchor} fontFamily={FONT} fontSize={34} fontWeight={400} fill={mutedColor}>
+              {p.sub}
+            </text>
+          )}
+        </g>
+      );
+    }
+
     if ((p.kind === "resistor" || p.kind === "button") && p.from && p.to) {
       const [x1, y1] = p.from;
       const [x2, y2] = p.to;
@@ -462,14 +627,7 @@ export const CircuitDiagram: React.FC<CircuitDiagramProps> = ({
         );
       } else {
         // Contact closes in 3 frames when a pressed window starts and opens in 3 frames when it ends.
-        let closed = 0;
-        for (const [a, b] of p.pressed ?? []) {
-          const c = Math.min(
-            interpolate(frame, [sec(a), sec(a) + 3], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
-            interpolate(frame, [sec(b), sec(b) + 3], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
-          );
-          closed = Math.max(closed, c);
-        }
+        const closed = windowLevel(p.pressed);
         const gap = Math.min(90, L * 0.45);
         const a0 = (L - gap) / 2;
         const lift = interpolate(closed, [0, 1], [-34, -8]);
@@ -505,6 +663,246 @@ export const CircuitDiagram: React.FC<CircuitDiagramProps> = ({
 
     if (!p.at) return null;
     const [x, y] = p.at;
+    const showPins = p.terminalLabels !== false;
+    const pinText = (tx: number, ty: number, s: string, anchor: "start" | "middle" | "end" = "middle") => (
+      <text key={s + tx + ty} x={tx} y={ty} textAnchor={anchor} fontFamily={FONT} fontSize={28} fontWeight={600} fill={mutedColor}>
+        {s}
+      </text>
+    );
+    /** Title (+ sub) of a package part, placed around its box on the `textAt` side. */
+    const boxLabel = (w: number, h: number, side: NonNullable<CircuitPart["textAt"]>) => {
+      if (!p.text) return null;
+      const pos =
+        side === "left"
+          ? { tx: x - 26, ty: y + h / 2 + fs * 0.35 - (p.sub ? 20 : 0), anchor: "end" as const }
+          : side === "right"
+            ? { tx: x + w + 26, ty: y + h / 2 + fs * 0.35 - (p.sub ? 20 : 0), anchor: "start" as const }
+            : side === "below"
+              ? { tx: x + w / 2, ty: y + h + fs + 14, anchor: "middle" as const }
+              : { tx: x + w / 2, ty: y - 26 - (p.sub ? 40 : 0), anchor: "middle" as const };
+      return (
+        <>
+          <text x={pos.tx} y={pos.ty} textAnchor={pos.anchor} fontFamily={FONT} fontSize={fs} fontWeight={700} fill={ink}>
+            {p.text}
+          </text>
+          {p.sub && (
+            <text x={pos.tx} y={pos.ty + 42} textAnchor={pos.anchor} fontFamily={FONT} fontSize={32} fontWeight={400} fill={mutedColor}>
+              {p.sub}
+            </text>
+          )}
+        </>
+      );
+    };
+
+    if (p.kind === "relay") {
+      // Package outline, coil on the left, changeover contact (COM / NC / NO) on the right, dashed mechanical link.
+      const w = p.w ?? 420;
+      const h = p.h ?? 340;
+      const on = windowLevel(p.active);
+      const hot = on > 0.5 ? accentColor : ink;
+      const cx = x + 0.25 * w;
+      const coilW = 76;
+      const coilH = 0.36 * h;
+      const ym = y + 0.5 * h;
+      const pivot: Pt = [x + 0.72 * w, y + 0.72 * h];
+      const nc: Pt = [x + 0.55 * w, y + 0.3 * h];
+      const no: Pt = [x + 0.9 * w, y + 0.3 * h];
+      const aNC = Math.atan2(nc[1] - pivot[1], nc[0] - pivot[0]);
+      const aNO = Math.atan2(no[1] - pivot[1], no[0] - pivot[0]);
+      const armL = Math.min(Math.hypot(nc[0] - pivot[0], nc[1] - pivot[1]), Math.hypot(no[0] - pivot[0], no[1] - pivot[1]));
+      const a = aNC + (aNO - aNC) * on;
+      const tip: Pt = [pivot[0] + armL * Math.cos(a), pivot[1] + armL * Math.sin(a)];
+      const link: Pt = [pivot[0] + (tip[0] - pivot[0]) * 0.45, pivot[1] + (tip[1] - pivot[1]) * 0.45];
+      const pin = (q: Pt, k: string) => <circle key={k} cx={q[0]} cy={q[1]} r={9} fill="#FFFFFF" stroke={ink} strokeWidth={4} />;
+      return (
+        <g key={i} opacity={o}>
+          <rect x={x} y={y} width={w} height={h} rx={24} fill="rgba(0,102,204,0.03)" stroke={mutedColor} strokeWidth={3} strokeDasharray="12 10" />
+          {/* Coil */}
+          <line x1={cx} y1={y} x2={cx} y2={ym - coilH / 2} stroke={hot} strokeWidth={STROKE} strokeLinecap="round" />
+          <line x1={cx} y1={ym + coilH / 2} x2={cx} y2={y + h} stroke={hot} strokeWidth={STROKE} strokeLinecap="round" />
+          <rect x={cx - coilW / 2} y={ym - coilH / 2} width={coilW} height={coilH} rx={6} fill={accentColor} fillOpacity={0.04 + 0.2 * on} stroke={hot} strokeWidth={STROKE} />
+          <line x1={cx - coilW / 2} y1={ym + coilH / 2} x2={cx + coilW / 2} y2={ym - coilH / 2} stroke={hot} strokeWidth={3} />
+          {/* Mechanical link */}
+          <line x1={cx + coilW / 2} y1={ym} x2={link[0]} y2={link[1]} stroke={mutedColor} strokeWidth={3} strokeDasharray="10 9" />
+          {/* Contacts */}
+          <line x1={nc[0]} y1={y} x2={nc[0]} y2={nc[1]} stroke={ink} strokeWidth={STROKE} strokeLinecap="round" />
+          <line x1={no[0]} y1={y} x2={no[0]} y2={no[1]} stroke={on > 0.5 ? accentColor : ink} strokeWidth={STROKE} strokeLinecap="round" />
+          <line x1={pivot[0]} y1={y + h} x2={pivot[0]} y2={pivot[1]} stroke={ink} strokeWidth={STROKE} strokeLinecap="round" />
+          <circle cx={nc[0]} cy={nc[1]} r={8} fill={ink} />
+          <circle cx={no[0]} cy={no[1]} r={8} fill={on > 0.5 ? accentColor : ink} />
+          <line x1={pivot[0]} y1={pivot[1]} x2={tip[0]} y2={tip[1]} stroke={hot} strokeWidth={STROKE + 2} strokeLinecap="round" />
+          <circle cx={pivot[0]} cy={pivot[1]} r={10} fill="#FFFFFF" stroke={hot} strokeWidth={4} />
+          {pin([cx, y], "a1")}
+          {pin([cx, y + h], "a2")}
+          {pin([nc[0], y], "nc")}
+          {pin([no[0], y], "no")}
+          {pin([pivot[0], y + h], "com")}
+          {showPins && (
+            <>
+              {pinText(nc[0] - 16, y + 46, "NC", "end")}
+              {pinText(no[0] - 16, y + 46, "NO", "end")}
+              {pinText(pivot[0] + 18, y + h - 22, "COM", "start")}
+            </>
+          )}
+          {boxLabel(w, h, p.textAt ?? "below")}
+        </g>
+      );
+    }
+
+    if (p.kind === "npn" || p.kind === "nmos") {
+      // Discrete transistor in a circle; the collector-emitter / drain-source path turns accent while it conducts.
+      const on = windowLevel(p.active);
+      const hot = on > 0.5 ? accentColor : ink;
+      const R = 62;
+      const line = (pts: Pt[], c: string, wdt = STROKE, k?: string) => (
+        <path key={k} d={pts.map((q, n) => `${n ? "L" : "M"}${q[0]},${q[1]}`).join(" ")} fill="none" stroke={c} strokeWidth={wdt} strokeLinecap="round" strokeLinejoin="round" />
+      );
+      let sym: React.ReactNode;
+      if (p.kind === "npn") {
+        sym = (
+          <>
+            {line([[x - 110, y], [x - 22, y]], hot)}
+            {line([[x - 22, y - 36], [x - 22, y + 36]], ink, 7)}
+            {line([[x - 22, y - 16], [x + 32, y - 46], [x + 32, y - 110]], hot)}
+            {line([[x - 22, y + 16], [x + 32, y + 46], [x + 32, y + 110]], hot)}
+            {arrowHead([x + 21, y + 40], [54, 30], 24, hot)}
+          </>
+        );
+      } else {
+        const seg = (a0: number, a1: number, k: string) => line([[x - 18, y + a0], [x - 18, y + a1]], ink, 6, k);
+        sym = (
+          <>
+            {line([[x - 110, y], [x - 38, y]], hot)}
+            {line([[x - 38, y - 40], [x - 38, y + 40]], ink, 6)}
+            {on > 0.5 ? line([[x - 18, y - 40], [x - 18, y + 40]], hot, 6) : [seg(-40, -20, "s0"), seg(-9, 9, "s1"), seg(20, 40, "s2")]}
+            {line([[x - 18, y - 30], [x + 32, y - 30], [x + 32, y - 110]], hot)}
+            {line([[x - 18, y + 30], [x + 32, y + 30], [x + 32, y + 110]], hot)}
+            {line([[x - 18, y], [x + 32, y], [x + 32, y + 30]], ink, 4)}
+            {arrowHead([x - 14, y], [-1, 0], 22, ink)}
+          </>
+        );
+      }
+      const [b, c, e] = p.kind === "npn" ? ["B", "C", "E"] : ["G", "D", "S"];
+      const t = textAnchor(p.textAt ?? "right", [x, y], R + 46);
+      return (
+        <g key={i} opacity={o}>
+          <circle cx={x} cy={y} r={R} fill="#FFFFFF" stroke={ink} strokeWidth={4} />
+          {sym}
+          {showPins && (
+            <>
+              {pinText(x - 96, y - 16, b, "start")}
+              {pinText(x + 46, y - 78, c, "start")}
+              {pinText(x + 46, y + 100, e, "start")}
+            </>
+          )}
+          {p.text && (
+            <text x={t.x} y={t.y + (p.sub ? -6 : fs * 0.35)} textAnchor={t.anchor} fontFamily={FONT} fontSize={fs} fontWeight={700} fill={ink}>
+              {p.text}
+            </text>
+          )}
+          {p.sub && (
+            <text x={t.x} y={t.y + fs * 0.35 + 34} textAnchor={t.anchor} fontFamily={FONT} fontSize={32} fontWeight={400} fill={mutedColor}>
+              {p.sub}
+            </text>
+          )}
+        </g>
+      );
+    }
+
+    if (p.kind === "opto" || p.kind === "ssr") {
+      // Light-coupled packages: an input LED shines across the gap onto a phototransistor (opto) or a triac (SSR).
+      const ssr = p.kind === "ssr";
+      const w = p.w ?? (ssr ? 360 : 300);
+      const h = p.h ?? 260;
+      const on = windowLevel(p.active);
+      const hot = on > 0.5 ? accentColor : ink;
+      const lit = p.color ?? "#FF3B30";
+      const yA = y + (ssr ? 0.3 : 0.25) * h;
+      const yK = y + (ssr ? 0.7 : 0.75) * h;
+      const ym = y + 0.5 * h;
+      const lx = x + (ssr ? 0.24 : 0.28) * w;
+      const ox = x + (ssr ? 0.7 : 0.66) * w;
+      const line = (pts: Pt[], c: string, wdt = STROKE, k?: string) => (
+        <path key={k} d={pts.map((q, n) => `${n ? "L" : "M"}${q[0]},${q[1]}`).join(" ")} fill="none" stroke={c} strokeWidth={wdt} strokeLinecap="round" strokeLinejoin="round" />
+      );
+      const gid = `${p.kind}-glow-${i}-${Math.round(x)}-${Math.round(y)}`;
+      const beam = on > 0.5 ? lit : mutedColor;
+      const beams = [-16, 14].map((dy, k) => (
+        <g key={k} opacity={0.35 + 0.65 * on}>
+          {line([[lx + 42, ym + dy], [ox - (ssr ? 66 : 34), ym + dy]], beam, 4)}
+          {arrowHead([ox - (ssr ? 56 : 24), ym + dy], [1, 0], 18, beam)}
+        </g>
+      ));
+      let out: React.ReactNode;
+      if (ssr) {
+        out = (
+          <>
+            {line([[x + w, yA], [ox, yA], [ox, ym - 34]], hot)}
+            {line([[ox, ym + 34], [ox, yK], [x + w, yK]], hot)}
+            {line([[ox - 42, ym - 34], [ox + 42, ym - 34]], hot)}
+            {line([[ox - 42, ym + 34], [ox + 42, ym + 34]], hot)}
+            <polygon points={`${ox - 38},${ym - 34} ${ox - 4},${ym - 34} ${ox - 21},${ym + 34}`} fill={accentColor} fillOpacity={0.85 * on} stroke={hot} strokeWidth={4} strokeLinejoin="round" />
+            <polygon points={`${ox + 4},${ym + 34} ${ox + 38},${ym + 34} ${ox + 21},${ym - 34}`} fill={accentColor} fillOpacity={0.85 * on} stroke={hot} strokeWidth={4} strokeLinejoin="round" />
+          </>
+        );
+      } else {
+        out = (
+          <>
+            {line([[ox, ym - 36], [ox, ym + 36]], ink, 7)}
+            {line([[ox, ym - 16], [ox + 46, ym - 44], [ox + 46, yA], [x + w, yA]], hot)}
+            {line([[ox, ym + 16], [ox + 46, ym + 44], [ox + 46, yK], [x + w, yK]], hot)}
+            {arrowHead([ox + 36, ym + 38], [46, 28], 20, hot)}
+          </>
+        );
+      }
+      return (
+        <g key={i} opacity={o}>
+          <rect x={x} y={y} width={w} height={h} rx={20} fill="#FFFFFF" stroke="rgba(0,0,0,0.35)" strokeWidth={4} />
+          <defs>
+            <radialGradient id={gid}>
+              <stop offset="0%" stopColor={lit} stopOpacity={0.8 * on} />
+              <stop offset="100%" stopColor={lit} stopOpacity={0} />
+            </radialGradient>
+          </defs>
+          <circle cx={lx} cy={ym} r={70} fill={`url(#${gid})`} />
+          {line([[x, yA], [lx, yA], [lx, ym - 28]], ink)}
+          <polygon points={`${lx - 30},${ym - 28} ${lx + 30},${ym - 28} ${lx},${ym + 22}`} fill={lit} fillOpacity={0.12 + 0.88 * on} stroke={ink} strokeWidth={STROKE} strokeLinejoin="round" />
+          {line([[lx - 32, ym + 22], [lx + 32, ym + 22]], ink, STROKE + 1)}
+          {line([[lx, ym + 22], [lx, yK], [x, yK]], ink)}
+          {beams}
+          {out}
+          {showPins &&
+            (ssr ? (
+              <>
+                {pinText(x + 22, yA - 14, "+", "start")}
+                {pinText(x + 22, yK - 14, "−", "start")}
+                {pinText(x + w - 22, yA - 14, "~", "end")}
+                {pinText(x + w - 22, yK - 14, "~", "end")}
+              </>
+            ) : null)}
+          {boxLabel(w, h, p.textAt ?? "above")}
+        </g>
+      );
+    }
+
+    if (p.kind === "hazard") {
+      // Electrical warning sign: yellow triangle with a lightning bolt, centred on `at`.
+      const s = p.w ?? 200;
+      const th = s * 0.866;
+      const k = interpolate(o, [0, 1], [0.7, 1]);
+      const bolt: Pt[] = [[0.03, -0.24], [-0.09, 0.03], [-0.01, 0.03], [-0.05, 0.24], [0.09, -0.05], [0.01, -0.05], [0.07, -0.24]];
+      return (
+        <g key={i} opacity={o} transform={`translate(${x},${y}) scale(${k})`}>
+          <polygon points={`0,${(-2 * th) / 3} ${-s / 2},${th / 3} ${s / 2},${th / 3}`} fill="#FFCC00" stroke="#1D1D1F" strokeWidth={s * 0.05} strokeLinejoin="round" />
+          <polygon points={bolt.map(([bx, by]) => `${bx * s},${by * s + s * 0.04}`).join(" ")} fill="#1D1D1F" />
+          {p.text && (
+            <text x={0} y={th / 3 + fs + 18} textAnchor="middle" fontFamily={FONT} fontSize={fs} fontWeight={700} fill={p.tone ? ink : conColor}>
+              {p.text}
+            </text>
+          )}
+        </g>
+      );
+    }
 
     if (p.kind === "servo") {
       // Top view: body with mounting ears, output shaft near one end, horn rotating over a dashed -90..+90 range.
