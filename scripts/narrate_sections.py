@@ -1,22 +1,26 @@
 """Generate and verify Vietnamese narration one section at a time.
 
 Each script section is synthesised with `vieneu_tts`, transcribed with
-faster-whisper large-v3 and aligned word by word with the script. A section
-that passes is adopted; one that fails is regenerated on its own, up to
---tries attempts. The tool already sends every section as its own request, so
-sections from different attempts are as consistent as the sections of one take.
-Once every section passes:
+faster-whisper large-v3 and aligned word by word with the script. An attempt
+passes when at least --min-score (default 85 %) of the checked script words
+are heard; the words it missed are still printed, for the user to judge while
+listening to the full narration. A section that passes is adopted; one that
+fails is regenerated on its own, up to --tries attempts. The tool already sends
+every section as its own request, so sections from different attempts are as
+consistent as the sections of one take. Once every section passes:
 
   1. adopted sections are gain-matched to their median loudness (true peak kept
      at or below -1 dBFS) and written to assets/audio/narration_<id>.wav;
   2. a section whose speech rate is more than 15 % off the median is flagged
      (reported, never changed);
   3. the adopted sections are joined into work/narration_full.wav, and the whole
-     file is transcribed with large-v3 and checked against the full script.
+     file is transcribed with large-v3 and checked against the full script with
+     the same --min-score;
+  4. every word the adopted sections missed is listed once more, to listen for.
 
 Build the scene plan and the video only after this exits 0.
 
-    python scripts/narrate_sections.py <slug> [--tries 4] [--redo s2 s5] [--ignore giây vôn]
+    python scripts/narrate_sections.py <slug> [--tries 4] [--min-score 0.85] [--redo s2 s5] [--ignore giây vôn]
 
 Reads projects/<slug>/artifacts/script.json (section id and text: the reference
 for the check) and projects/<slug>/work/tts_text.json (id -> the lower-case text
@@ -32,7 +36,7 @@ section for terms whose meaning changes when misread ("board" -> "bot"). The
 voice speaks Northern Vietnamese, where the initials ch/tr, d/gi/r and s/x sound
 alike, so a word heard with the other spelling ("trục" for "chục") still counts.
 
-Exit status: 0 every check passed, 1 a section or the full listen-back failed,
+Exit status: 0 every check reached --min-score, 1 a section or the full listen-back did not,
 2 setup error (missing input, no ffmpeg, voice server not ready).
 """
 from __future__ import annotations
@@ -64,6 +68,9 @@ IGNORE = {
 }
 PEAK_CEILING_DB = -1.0
 RATE_TOLERANCE = 0.15
+# Share of checked script words an attempt must be heard saying (user decision 2026-10-10:
+# below it the attempt is retaken; the misses above it are the user's call on the full listen).
+MIN_SCORE = 0.85
 
 
 class SetupError(Exception):
@@ -117,13 +124,17 @@ def transcribe(wav: Path, out_dir: Path) -> dict:
     return r.data
 
 
-def score(wav: Path, expected: str, out_dir: Path, ignore: set[str]) -> dict:
+def score(wav: Path, expected: str, out_dir: Path, ignore: set[str], min_score: float) -> dict:
     t = transcribe(wav, out_dir)
     heard = " ".join(s["text"].strip() for s in t["segments"])
     misses, extras = compare(expected, heard, ignore)
+    checked = len(tokens(expected, ignore))
+    missed = sum(len(m["expected"].split()) for m in misses)
+    match = 1 - missed / checked if checked else 1.0
     words = t.get("word_timestamps") or []
     span = words[-1]["end"] - words[0]["start"] if words else 0.0
-    return {"try": wav.stem, "passed": not misses, "misses": misses, "extras": extras,
+    return {"try": wav.stem, "passed": match >= min_score - 1e-9, "match": round(match, 3),
+            "misses": misses, "extras": extras,
             "heard": heard, "rate": round(len(words) / span, 2) if span > 0 else None}
 
 
@@ -158,7 +169,7 @@ def narrate_section(sid: str, text: str, tts_text: str, base: Path, args, ignore
     live, next_k = attempts(sec_dir)
     results = []
     for wav in live:
-        results.append(score(wav, text, out_dir, ignore))
+        results.append(score(wav, text, out_dir, ignore, args.min_score))
         if results[-1]["passed"]:
             break
     while not (results and results[-1]["passed"]) and len(results) < args.tries:
@@ -168,17 +179,18 @@ def narrate_section(sid: str, text: str, tts_text: str, base: Path, args, ignore
                                  "segments": [{"text": tts_text, "output_path": str(wav)}]})
         if not r.success:
             raise SetupError(f"TTS failed for {sid}: {r.error}")
-        results.append(score(wav, text, out_dir, ignore))
+        results.append(score(wav, text, out_dir, ignore, args.min_score))
     for r in results:
         state = "PASS" if r["passed"] else "fail"
-        print(f"{sid} {r['try']}: {state}  rate {r['rate']} w/s")
+        print(f"{sid} {r['try']}: {state}  match {r['match']:.1%}  rate {r['rate']} w/s")
         for m in r["misses"]:
             print(f"   missing '{m['expected']}' heard '{m['heard']}'  ({m['context']})")
         if r["extras"]:
             print(f"   extra words heard: {r['extras']}")
     adopted = next((r for r in results if r["passed"]), None)
     section = {"id": sid, "adopted": adopted["try"] if adopted else None,
-               "rate": adopted["rate"] if adopted else None, "attempts": results}
+               "rate": adopted["rate"] if adopted else None,
+               "to_listen": adopted["misses"] if adopted else [], "attempts": results}
     if adopted:
         print(f"{sid} HEARD: {adopted['heard']}")
     else:
@@ -237,6 +249,8 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("slug", help="project folder under projects/")
     ap.add_argument("--tries", type=int, default=4, help="attempts per section before giving up (default 4)")
+    ap.add_argument("--min-score", type=float, default=MIN_SCORE, metavar="RATIO",
+                    help=f"share of checked script words an attempt must be heard saying (default {MIN_SCORE})")
     ap.add_argument("--redo", nargs="+", default=[], metavar="ID", help="section ids to start over")
     ap.add_argument("--ignore", nargs="+", default=[], metavar="WORD",
                     help="extra words whisper writes differently on every take (units such as giây, vôn)")
@@ -253,6 +267,8 @@ def main() -> int:
         tts = json.loads((base / "work" / "tts_text.json").read_text(encoding="utf-8"))
         if args.tries < 1:
             raise SetupError("--tries must be at least 1")
+        if not 0 < args.min_score <= 1:
+            raise SetupError("--min-score must be in (0, 1]")
         missing = [s["id"] for s in script["sections"] if s["id"] not in tts]
         if missing:
             raise SetupError(f"tts_text.json has no text for {missing}")
@@ -267,12 +283,16 @@ def main() -> int:
             adopt(sections, base, ffmpeg)
             full = join(sections, base, args.gap)
             expected = " ".join(s["text"] for s in script["sections"])
-            res = score(full, expected, base / "work" / "transcripts_large", ignore)
+            res = score(full, expected, base / "work" / "transcripts_large", ignore, args.min_score)
             report["full"] = res
             report["passed"] = res["passed"]
-            print(f"full listen-back ({full.name}): {'PASS' if res['passed'] else 'FAIL'}")
+            print(f"full listen-back ({full.name}): {'PASS' if res['passed'] else 'FAIL'}  match {res['match']:.1%}")
             for m in res["misses"]:
                 print(f"   missing '{m['expected']}' heard '{m['heard']}'  ({m['context']})")
+            print("words to listen for in the full narration (the user decides):")
+            for s in sections:
+                for m in s["to_listen"]:
+                    print(f"   {s['id']} {s['adopted']}: '{m['expected']}' heard '{m['heard']}'  ({m['context']})")
         (base / "work" / "narration_report.json").write_text(
             json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     except (SetupError, OSError, KeyError, json.JSONDecodeError, subprocess.CalledProcessError) as e:
