@@ -172,7 +172,8 @@ export const CircuitDiagram: React.FC<CircuitDiagramProps> = ({
   const { fps, width, height } = useVideoConfig();
   const portrait = height > width;
   const sec = (s: number) => Math.round(s * fps);
-  const pop = (start: number, damping = 16) => spring({ frame: frame - start, fps, config: { damping, stiffness: 120 } });
+  // A start at or before frame 0 is fully drawn on the cut's first frame (no fade-in from a blank frame).
+  const pop = (start: number, damping = 16) => (start <= 0 ? 1 : spring({ frame: frame - start, fps, config: { damping, stiffness: 120 } }));
   const toneColor = (t: Tone | undefined) =>
     t === "accent" ? accentColor : t === "good" ? proColor : t === "bad" ? conColor : t === "muted" ? mutedColor : textColor;
   // Visibility of a part: spring in at atSeconds, fade out over 6 frames from untilSeconds.
