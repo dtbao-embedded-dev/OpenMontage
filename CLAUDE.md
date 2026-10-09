@@ -149,8 +149,10 @@ point of the default background.
      rate more than 15 % off the median, join them into `work/narration_full.wav` and run a
      large-v3 listen-back on the whole narration. Build the scene plan and the video only after
      the script exits 0, and only from these files, so the visuals stay in sync with the voice.
-  3. The automatic check covers words with Vietnamese diacritics only. Read the HEARD text it
-     prints for every section for the English terms whose meaning changes when misread
+  3. The automatic check covers words with Vietnamese diacritics only. Initials that sound alike
+     in the Northern voice (ch/tr, d/gi/r, s/x) count as a match, so "trục" for "chục" or "dây"
+     for "giây" needs no `--ignore`; an ignored word also drops its sound-alikes. Read the HEARD
+     text it prints for every section for the English terms whose meaning changes when misread
      (e.g. "board" heard as "bot"/"both").
   4. After the video render, run a final large-v3 listen-back on the audio of the full render.
      It catches mix and cut problems. It does not replace steps 1–2.

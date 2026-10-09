@@ -28,7 +28,9 @@ those sections to try<k>.rejected.wav and starts them over.
 The automatic check covers words with Vietnamese diacritics. All-ASCII words
 (English terms, and Vietnamese words without marks) and number words are left
 out because whisper spells them freely: read the HEARD text printed for every
-section for terms whose meaning changes when misread ("board" -> "bot").
+section for terms whose meaning changes when misread ("board" -> "bot"). The
+voice speaks Northern Vietnamese, where the initials ch/tr, d/gi/r and s/x sound
+alike, so a word heard with the other spelling ("trục" for "chục") still counts.
 
 Exit status: 0 every check passed, 1 a section or the full listen-back failed,
 2 setup error (missing input, no ffmpeg, voice server not ready).
@@ -42,6 +44,7 @@ import shutil
 import statistics
 import subprocess
 import sys
+import unicodedata
 import wave
 from difflib import SequenceMatcher
 from pathlib import Path
@@ -68,15 +71,33 @@ class SetupError(Exception):
 
 
 def tokens(text: str, ignore: set[str]) -> list[str]:
-    return [w for w in re.findall(r"[^\W\d_]+", text.lower())
-            if not re.fullmatch(r"[a-z]+", w) and w not in ignore]
+    # Ignoring a word ignores every spelling that sounds the same ("giây" also drops "dây").
+    skip = {fold(w) for w in ignore}
+    return [w for w in re.findall(r"[^\W\d_]+", unicodedata.normalize("NFC", text).lower())
+            if not re.fullmatch(r"[a-z]+", w) and fold(w) not in skip]
+
+
+def fold(word: str) -> str:
+    """One spelling for initials that sound alike in Northern Vietnamese: ch/tr, d/gi/r, s/x."""
+    w = unicodedata.normalize("NFD", word)
+    if w.startswith("tr"):
+        return "ch" + w[2:]
+    if w.startswith("x"):
+        return "s" + w[1:]
+    if w.startswith("gi"):
+        # "gi" is the consonant when a vowel follows ("giây"); in "gì" the i is the vowel.
+        return "z" + (w[2:] if w[2:3] in {"a", "e", "i", "o", "u", "y"} else w[1:])
+    if w.startswith(("d", "r")):
+        return "z" + w[1:]
+    return w
 
 
 def compare(expected: str, heard: str, ignore: set[str]) -> tuple[list[dict], list[str]]:
     """Script words the audio is missing or replaced, and words the audio added."""
     exp, got = tokens(expected, ignore), tokens(heard, ignore)
     misses, extras = [], []
-    for op, i1, i2, j1, j2 in SequenceMatcher(None, exp, got, autojunk=False).get_opcodes():
+    matcher = SequenceMatcher(None, [fold(w) for w in exp], [fold(w) for w in got], autojunk=False)
+    for op, i1, i2, j1, j2 in matcher.get_opcodes():
         if op in ("replace", "delete"):
             misses.append({"expected": " ".join(exp[i1:i2]), "heard": " ".join(got[j1:j2]),
                            "context": " ".join(exp[max(0, i1 - 3):i2 + 3])})
