@@ -55,6 +55,8 @@ export interface CircuitPart {
   atSeconds?: number;
   /** Seconds after cut start when the part fades out (to swap a tag or a whole sub-circuit). */
   untilSeconds?: number;
+  /** Appear at `atSeconds` and vanish at `untilSeconds` with no spring or fade (fast swaps such as melody notes). */
+  cut?: boolean;
   /** button: [start, end] seconds when it is held down (contact closed). */
   pressed?: [number, number][];
   /** wire: current-flow dots travel along the wire in this window. */
@@ -151,6 +153,7 @@ export const CircuitDiagram: React.FC<CircuitDiagramProps> = ({
     t === "accent" ? accentColor : t === "good" ? proColor : t === "bad" ? conColor : t === "muted" ? mutedColor : textColor;
   // Visibility of a part: spring in at atSeconds, fade out over 6 frames from untilSeconds.
   const vis = (p: CircuitPart) => {
+    if (p.cut) return frame >= sec(p.atSeconds ?? 0) && (p.untilSeconds === undefined || frame < sec(p.untilSeconds)) ? 1 : 0;
     const inP = (p.atSeconds ?? 0) <= 0 ? 1 : pop(sec(p.atSeconds!));
     const out = p.untilSeconds === undefined ? 1 : interpolate(frame, [sec(p.untilSeconds), sec(p.untilSeconds) + 6], [1, 0], {
       extrapolateLeft: "clamp",
