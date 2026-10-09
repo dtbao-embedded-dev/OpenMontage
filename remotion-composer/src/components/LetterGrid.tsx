@@ -54,7 +54,7 @@ export const LetterGrid: React.FC<LetterGridProps> = ({
   // 0.62 em is a safe average glyph width for Inter ExtraBold; W and M run ~0.95 em.
   const textEm = (text: string) => Math.max([...text].reduce((em, c) => em + (/[WMwm]/.test(c) ? 0.95 : 0.62), 0), 0.62);
   const fitSize = (text: string) => Math.min(letterSize, Math.floor((tileW - 48) / textEm(text)));
-  const titleIn = spring({ frame, fps, config: { damping: 18 } });
+  const titleIn = 1; // drawn from the first frame, so a cut into this scene never shows a blank background
 
   return (
     <AbsoluteFill

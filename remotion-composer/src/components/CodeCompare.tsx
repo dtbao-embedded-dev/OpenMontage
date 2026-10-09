@@ -106,7 +106,9 @@ export const CodeCompare: React.FC<CodeCompareProps> = ({
   const { fps, width, height } = useVideoConfig();
   const portrait = height > width;
   const at = (s: number | undefined, fallback: number) => Math.round((s ?? fallback) * fps);
-  const pop = (start: number, damping = 16) => spring({ frame: frame - start, fps, config: { damping, stiffness: 120 } });
+  // Anything that starts at frame 0 (the heading, a code card due at once) is drawn fully from the first frame, so a cut
+  // into this scene never shows a blank background.
+  const pop = (start: number, damping = 16) => (start <= 0 ? 1 : spring({ frame: frame - start, fps, config: { damping, stiffness: 120 } }));
 
   const head = pop(0, 18);
   const card = pop(at(codeAtSeconds, 0.3) - 6, 20);
