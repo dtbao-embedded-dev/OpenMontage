@@ -143,6 +143,14 @@ point of the default background.
   small and medium mishear both ways, so they are not a pronunciation check (small stays the
   timing source, see Sync). large-v3 invents phrases such as "Cảm ơn các bạn đã theo dõi" on a
   music-only tail; ignore text past the last narration section.
+- **Letter case of TTS text:** the server's text front end spells an upper-case word it does not
+  know with Vietnamese letter names (voice-tts README, "Some words are respelled"). So every text
+  sent to the voice server is **all lower case** — sentence starts, names and English terms
+  included (`esp32-s3`, `wifi`, `arduino`). Write a word in **upper case only when it must be
+  read letter by letter** (`ESP`, `GPIO`, `HTTP`, `UART`). This changes only the case: the words
+  stay the script's words, and the on-screen text keeps normal casing. The closing line below is
+  verbatim in its words; it is sent as
+  "có thắc mắc gì về ESP, nhắn tin trực tiếp cho mình nhé, mình trả lời từng người."
 - **Terms the voice garbles:** fixed on the voice-tts server, not in OpenMontage. Keep the term in
   the script and do not rephrase or respell it here. If a term still comes out wrong, stop and
   report it with the take, the time and what large-v3 heard. Known so far: "board" → "bot", "ESP-NOW" → "ESP-NOV kép" (W spelled as "vê kép"),
