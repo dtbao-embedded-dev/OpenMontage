@@ -109,8 +109,9 @@ point of the default background.
 ### Voice (Vietnamese narration)
 
 - VieNeu-TTS, voice **"Hải Đăng"**, raw text (its g2p handles English terms; no phonetic respelling).
-- **Primary: the homelab voice server** (`E:\Baotd\software\apps\voice-tts`, same VieNeu v3 Turbo
-  model, 48 kHz, same voice names):
+- **Primary: the remote voice-tts server** (`E:\Baotd\software\apps\voice-tts`, same VieNeu v3 Turbo
+  model, 48 kHz, same voice names). The homelab server is retired (2026-10-09); the new host
+  is pending:
 
   ```sh
   curl -f -X POST http://<host>:8760/api/tts/stream \
@@ -123,10 +124,11 @@ point of the default background.
   `"format": "wav"` is required — the default `"f32"` streams raw float32, not a WAV file.
   `"pronunciation": "special"` (server ≥ 0.7.0) turns on the server lexicon that fixes the garbled
   terms below; the default `"normal"` reads the text as typed and still says "bot" / "áp".
-  Host: `VOICE_TTS_SERVER` in the repo `.env` (homelab LAN address, port 8760).
+  Host: `VOICE_TTS_SERVER` in the repo `.env` (port 8760). Never point it back at the retired
+  homelab address. Until the new host is set, `vieneu_tts` is unavailable and narration is a blocker.
   Token: `VOICE_TTS_TOKEN` in the repo `.env` (gitignored); never write the token into this file or any tracked file. The token lives in
   `~/voice-tts/.env` on the server. Check readiness with `voice-tts status --wait 120`.
-- **Homelab only — no local synthesis.** In the pipeline, call tool `vieneu_tts`
+- **Remote server only — no local synthesis.** In the pipeline, call tool `vieneu_tts`
   (repo-local `tools/audio/vieneu_tts.py`): it posts to the server above with `"format": "wav"`
   and `"pronunciation": "special"` (tool default) and never runs a model on this machine. If the server is unreachable or not `ready`,
   stop and report it as a blocker — do not fall back to Piper or any other TTS without approval.
