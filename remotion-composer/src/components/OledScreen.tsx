@@ -95,6 +95,51 @@ export interface OledCodeHighlight {
   untilSeconds?: number;
 }
 
+/**
+ * A rotary encoder knob (top view) drawn to the right of the module. `track` keyframes `[seconds, detent]` turn it,
+ * one click every `clickSeconds`, from the previous detent to the new one (positive = clockwise); the detent ring
+ * lights the current position and a readout shows the pulse count (`countsPerDetent` per click, counting through
+ * the in-between edges while it turns) and the detent number. `press` windows push the knob down (its switch).
+ */
+export interface OledKnob {
+  track: [number, number][];
+  /** Seconds per click while turning (default 0.16). */
+  clickSeconds?: number;
+  /** Detents per turn (default 20). */
+  detents?: number;
+  /** Counts per detent in the readout (default 4); 0 hides the readout. */
+  countsPerDetent?: number;
+  /** [start, end] seconds when the knob is pressed. */
+  press?: [number, number][];
+  /** Small label above the knob (e.g. "KY-040"). */
+  label?: string;
+  /** Readout labels (defaults "count" and "nấc"). */
+  countLabel?: string;
+  detentLabel?: string;
+  /** Text of the pill shown while pressed (default "Nhấn"). */
+  pressLabel?: string;
+  atSeconds?: number;
+  /** Column width in px (default 240). */
+  size?: number;
+}
+
+/** Knob position in detents (fractional while turning) at time t, each click eased like a detent snapping in. */
+export function knobDetent(knob: OledKnob, t: number): number {
+  const click = Math.max(0.02, knob.clickSeconds ?? 0.16);
+  const ease = (p: number) => 1 - Math.pow(1 - p, 3);
+  let v = 0;
+  for (const [t0, target] of [...knob.track].sort((a, b) => a[0] - b[0])) {
+    if (t < t0) break;
+    const delta = target - v;
+    const n = Math.abs(delta);
+    const k = Math.min(n, (t - t0) / click);
+    const whole = Math.floor(k);
+    const moved = k >= n ? n : whole + ease(k - whole);
+    v = v + Math.sign(delta) * moved;
+  }
+  return v;
+}
+
 interface OledScreenProps {
   name: string;
   eyebrow?: string;
@@ -122,6 +167,8 @@ interface OledScreenProps {
   codeRevealSeconds?: number;
   codeFontSize?: number;
   codeHighlights?: OledCodeHighlight[];
+  /** Rotary encoder knob beside the module; leave room for it with `boardWidth` (module + 28 px + knob size). */
+  knob?: OledKnob;
   points?: CodePoint[];
   textColor?: string;
   bodyColor?: string;
@@ -351,6 +398,7 @@ export const OledScreen: React.FC<OledScreenProps> = ({
   codeRevealSeconds = 1.2,
   codeFontSize = 25,
   codeHighlights = [],
+  knob,
   points = [],
   textColor = "#1D1D1F",
   bodyColor = "#424245",
@@ -430,6 +478,104 @@ export const OledScreen: React.FC<OledScreenProps> = ({
     overflow: "hidden",
   };
 
+  // ---------------------------------------------------------------- rotary knob beside the module
+  const renderKnob = (k: OledKnob) => {
+    const S = k.size ?? 240;
+    const c = S / 2;
+    const detents = Math.max(4, k.detents ?? 20);
+    const cpd = k.countsPerDetent ?? 4;
+    const v = knobDetent(k, t);
+    const vPrev = knobDetent(k, t - 3 / fps);
+    const turning = Math.abs(v - vPrev) > 1e-3;
+    const dir = Math.sign(v - vPrev);
+    const angle = (v * 360) / detents;
+    const pressed = (k.press ?? []).some(([a, b]) => t >= a && t < b);
+    const pressP = (k.press ?? []).reduce((o, [a, b]) => {
+      const inP = interpolate(frame, [sec(a), sec(a) + 3], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+      const outP = interpolate(frame, [sec(b), sec(b) + 4], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+      return Math.max(o, Math.min(inP, outP));
+    }, 0);
+    const lit = ((Math.round(v) % detents) + detents) % detents;
+    const count = Math.round(v * cpd);
+    const detentNow = cpd > 0 ? Math.trunc(count / cpd) : Math.round(v);
+    const op = pop(sec(k.atSeconds));
+    const arcR = S * 0.55; // outside the detent ring
+    const arcA0 = -50;
+    const arcA1 = 50;
+    const pt = (r: number, deg: number) => [c + r * Math.sin((deg * Math.PI) / 180), c - r * Math.cos((deg * Math.PI) / 180)];
+    const [ax0, ay0] = pt(arcR, arcA0);
+    const [ax1, ay1] = pt(arcR, arcA1);
+    const headDeg = dir >= 0 ? arcA1 : arcA0;
+    const [hx, hy] = pt(arcR, headDeg);
+    const tangent = headDeg + (dir >= 0 ? 90 : -90);
+    const arrowHead = (() => {
+      const back = (deg: number, len: number) => [hx - len * Math.sin((deg * Math.PI) / 180), hy + len * Math.cos((deg * Math.PI) / 180)];
+      const [b1x, b1y] = back(tangent - 28, 22);
+      const [b2x, b2y] = back(tangent + 28, 22);
+      return `M${b1x},${b1y} L${hx},${hy} L${b2x},${b2y}`;
+    })();
+    return (
+      <div style={{ width: S, display: "flex", flexDirection: "column", alignItems: "center", gap: 10, opacity: op }}>
+        {k.label && <div style={{ fontSize: 28, fontWeight: 600, letterSpacing: "0.005em", color: mutedColor }}>{k.label}</div>}
+        <svg width={S} height={S} viewBox={`0 0 ${S} ${S}`} style={{ display: "block", overflow: "visible", marginTop: 26 }}>
+          <defs>
+            <linearGradient id="knob-body" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stopColor="#D5D9DF" />
+              <stop offset="1" stopColor="#A9AFB8" />
+            </linearGradient>
+            <radialGradient id="knob-cap" cx="0.4" cy="0.35" r="0.75">
+              <stop offset="0" stopColor="#4A505A" />
+              <stop offset="1" stopColor="#1C1F24" />
+            </radialGradient>
+          </defs>
+          {/* Detent ring: one tick per click, the current one lit */}
+          {Array.from({ length: detents }, (_, i) => {
+            const deg = (i * 360) / detents;
+            const on = i === lit;
+            const [x0, y0] = pt(S * 0.4, deg);
+            const [x1, y1] = pt(S * 0.47, deg);
+            return <line key={i} x1={x0} y1={y0} x2={x1} y2={y1} stroke={on ? accentColor : "#C3C8CF"} strokeWidth={on ? 7 : 4} strokeLinecap="round" />;
+          })}
+          {/* Encoder housing */}
+          <rect x={c - S * 0.3} y={c - S * 0.3} width={S * 0.6} height={S * 0.6} rx={14} fill="url(#knob-body)" stroke="rgba(0,0,0,0.18)" strokeWidth={2} />
+          {/* Knob cap, pushed down while pressed */}
+          <g transform={`translate(${c},${c}) scale(${1 - 0.07 * pressP})`}>
+            <circle cx={0} cy={6 - 3 * pressP} r={S * 0.27} fill="rgba(0,0,0,0.22)" />
+            <g transform={`rotate(${angle})`}>
+              <circle cx={0} cy={0} r={S * 0.27} fill="#24272D" />
+              {Array.from({ length: 28 }, (_, i) => (
+                <rect key={i} x={-3} y={-S * 0.27} width={6} height={S * 0.045} rx={2} fill="#0E1013" transform={`rotate(${(i * 360) / 28})`} />
+              ))}
+              <circle cx={0} cy={0} r={S * 0.215} fill="url(#knob-cap)" />
+              <line x1={0} y1={-S * 0.05} x2={0} y2={-S * 0.19} stroke="#FFFFFF" strokeWidth={8} strokeLinecap="round" />
+            </g>
+          </g>
+          {/* Direction arc while turning */}
+          <g opacity={turning ? 1 : 0}>
+            <path d={`M${ax0},${ay0} A${arcR},${arcR} 0 0 1 ${ax1},${ay1}`} fill="none" stroke={accentColor} strokeWidth={6} strokeLinecap="round" />
+            <path d={arrowHead} fill="none" stroke={accentColor} strokeWidth={6} strokeLinecap="round" strokeLinejoin="round" />
+          </g>
+        </svg>
+        <div style={{ height: 52, display: "flex", alignItems: "center" }}>
+          {pressed && (
+            <div style={{ padding: "8px 24px", borderRadius: 26, background: accentColor, color: "#FFFFFF", fontSize: 28, fontWeight: 700, opacity: pressP }}>
+              {k.pressLabel ?? "Nhấn"}
+            </div>
+          )}
+        </div>
+        {cpd > 0 && (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+            <div style={{ fontSize: 28, color: mutedColor, letterSpacing: "0.005em", fontFamily: MONO }}>{k.countLabel ?? "count"}</div>
+            <div style={{ fontSize: 76, fontWeight: 700, letterSpacing: "-0.02em", color: accentColor, fontFamily: MONO, lineHeight: 1.05 }}>{count}</div>
+            <div style={{ fontSize: 32, fontWeight: 600, color: bodyColor }}>
+              = {detentNow} {k.detentLabel ?? "nấc"}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <AbsoluteFill
       style={{
@@ -448,6 +594,7 @@ export const OledScreen: React.FC<OledScreenProps> = ({
         {tagline && <div style={{ fontSize: 40, fontWeight: 400, lineHeight: 1.4, color: bodyColor, marginTop: 14 }}>{tagline}</div>}
       </div>
 
+      <div style={{ alignSelf: "center", display: "flex", alignItems: "center", gap: 28 }}>
       {/* Module */}
       <div style={{ alignSelf: "center", opacity: board, transform: `scale(${interpolate(board, [0, 1], [0.94, 1])})` }}>
         <svg width={boardWidth} height={boardH} viewBox={`0 0 ${boardWidth} ${boardH}`} style={{ display: "block", overflow: "visible" }}>
@@ -598,6 +745,8 @@ export const OledScreen: React.FC<OledScreenProps> = ({
         {caption && (
           <div style={{ marginTop: 14, textAlign: "center", fontSize: 28, letterSpacing: "0.005em", color: mutedColor, opacity: capOp }}>{caption}</div>
         )}
+      </div>
+      {knob && renderKnob(knob)}
       </div>
 
       {/* Byte card: the 8 bits of one GDDRAM byte, D0 at the top */}

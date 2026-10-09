@@ -53,7 +53,9 @@ import type { CircuitPart } from "./components/CircuitDiagram";
 import { LogicWave } from "./components/LogicWave";
 import type { WavePanel } from "./components/LogicWave";
 import { OledScreen } from "./components/OledScreen";
-import type { OledByte, OledCodeHighlight, OledLayer, OledMark, OledPages } from "./components/OledScreen";
+import type { OledByte, OledCodeHighlight, OledKnob, OledLayer, OledMark, OledPages } from "./components/OledScreen";
+import { TouchPad } from "./components/TouchPad";
+import type { TouchChart, TouchDrop, TouchFinger, TouchGridWindow, TouchGuard, TouchPadDef } from "./components/TouchPad";
 import { resolveAsset } from "./lib/resolveAsset";
 import type { ParticleType } from "./components/ParticleOverlay";
 import { resolveTheme, type ThemeConfig, DEFAULT_THEME } from "./Root";
@@ -387,7 +389,23 @@ interface Cut {
   oledGridUntilSeconds?: number;
   oledCaption?: string;
   oledCaptionAtSeconds?: number;
+  oledKnob?: OledKnob;
   codeHighlights?: OledCodeHighlight[];
+  // Touch panel props (type: "touch_pad"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
+  touchPads?: TouchPadDef[];
+  touchPanelHeight?: number;
+  touchFingers?: TouchFinger[];
+  touchDrops?: TouchDrop[];
+  touchFlood?: { atSeconds: number; untilSeconds?: number };
+  touchGrid?: TouchGridWindow[];
+  touchGuard?: TouchGuard;
+  touchChart?: TouchChart;
+  touchMeters?: boolean;
+  touchActiveLabel?: string;
+  touchFalseLabel?: string;
+  touchPausedLabel?: string;
+  touchCaption?: string;
+  touchCaptionAtSeconds?: number;
 }
 
 interface Overlay {
@@ -901,7 +919,21 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         gridAtSeconds={cut.oledGridAtSeconds} gridUntilSeconds={cut.oledGridUntilSeconds}
         caption={cut.oledCaption} captionAtSeconds={cut.oledCaptionAtSeconds}
         code={cut.code} codeTitle={cut.codeTitle} codeAtSeconds={cut.codeAtSeconds} codeRevealSeconds={cut.codeRevealSeconds}
-        codeFontSize={cut.codeFontSize} codeHighlights={cut.codeHighlights} points={cut.points}
+        codeFontSize={cut.codeFontSize} codeHighlights={cut.codeHighlights} knob={cut.oledKnob} points={cut.points}
+        textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
+        surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
+      />
+    );
+  }
+
+  if (cut.type === "touch_pad" && cut.name && cut.touchPads) {
+    return maybeWrapWithBg(
+      <TouchPad
+        name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline}
+        pads={cut.touchPads} panelHeight={cut.touchPanelHeight} fingers={cut.touchFingers} drops={cut.touchDrops}
+        flood={cut.touchFlood} grid={cut.touchGrid} guard={cut.touchGuard} chart={cut.touchChart} meters={cut.touchMeters}
+        activeLabel={cut.touchActiveLabel} falseLabel={cut.touchFalseLabel} pausedLabel={cut.touchPausedLabel}
+        caption={cut.touchCaption} captionAtSeconds={cut.touchCaptionAtSeconds} points={cut.points}
         textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
         surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
       />
