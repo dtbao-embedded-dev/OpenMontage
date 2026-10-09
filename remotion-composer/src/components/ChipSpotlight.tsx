@@ -154,7 +154,7 @@ export const ChipSpotlight: React.FC<ChipSpotlightProps> = ({
   const bob = Math.sin(frame / 22) * 8;
   const glow = hideGlow ? 0 : interpolate(boardIn, [0, 1], [0, 0.55]);
 
-  const titleIn = spring({ frame: frame - 6, fps, config: { damping: 18 } });
+  const titleIn = 1; // drawn from the first frame, like the board
 
   const hasCompanion = Boolean(companionImage);
   // One label column for every row, wide enough for the longest label (~0.56 em per Inter glyph at 28 px) plus a gap.
@@ -200,7 +200,8 @@ export const ChipSpotlight: React.FC<ChipSpotlightProps> = ({
                 ? { width: boardWidth, maxHeight: boardMaxHeight, objectFit: "contain" as const }
                 : { maxWidth: boardWidth, maxHeight: boardMaxHeight, width: "auto", height: "auto", borderRadius: imageRadius }),
               transform: `translate(${boardX}px, ${bob}px)`,
-              opacity: boardIn,
+              // Fully opaque from the first frame (it still slides in), so a cut into this scene never shows a blank background.
+              opacity: 1,
               filter: `drop-shadow(0 30px 40px rgba(0,0,0,${shadowOpacity}))`,
             }}
           />
