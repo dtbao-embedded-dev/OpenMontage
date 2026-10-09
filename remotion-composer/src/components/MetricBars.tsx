@@ -78,7 +78,8 @@ export const MetricBars: React.FC<MetricBarsProps> = ({
   const { fps, width, height } = useVideoConfig();
   const portrait = height > width;
   const at = (s: number | undefined, fallback: number) => Math.round((s ?? fallback) * fps);
-  const pop = (start: number, damping = 16) => spring({ frame: frame - start, fps, config: { damping, stiffness: 120 } });
+  // A start at or before frame 0 is fully drawn on the cut's first frame (no fade-in from a blank frame).
+  const pop = (start: number, damping = 16) => (start <= 0 ? 1 : spring({ frame: frame - start, fps, config: { damping, stiffness: 120 } }));
 
   const top = maxValue ?? Math.max(...rows.map((r) => r.value));
   // Log scale: one decade below the smallest value maps to an empty bar, so the smallest row still shows a stub.
