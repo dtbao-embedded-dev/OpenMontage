@@ -93,6 +93,13 @@ class VieneuTTS(BaseTool):
                 "default": 1.0,
                 "description": "Time-stretch factor (0.75-1.5); pitch unchanged",
             },
+            "pronunciation": {
+                "type": "string",
+                "enum": ["special", "normal"],
+                "default": "special",
+                "description": "'special' respells words the engine garbles (board, AP, POST, ESP32) via the "
+                               "server lexicon (voice-tts >= 0.7.0); 'normal' reads the text as typed",
+            },
             "output_path": {"type": "string"},
             "segments": {
                 "type": "array",
@@ -109,7 +116,7 @@ class VieneuTTS(BaseTool):
         cpu_cores=1, ram_mb=128, vram_mb=0, disk_mb=50, network_required=True
     )
     retry_policy = RetryPolicy(max_retries=1, retryable_errors=["ConnectionError", "Timeout"])
-    idempotency_key_fields = ["text", "voice", "speed", "segments"]
+    idempotency_key_fields = ["text", "voice", "speed", "pronunciation", "segments"]
     side_effects = ["writes audio file(s) to output_path", "calls the homelab voice-tts server"]
     user_visible_verification = ["Listen to generated audio for pronunciation"]
 
@@ -143,6 +150,7 @@ class VieneuTTS(BaseTool):
 
         voice = inputs.get("voice", DEFAULT_VOICE)
         speed = inputs.get("speed", 1.0)
+        pronunciation = inputs.get("pronunciation", "special")
         segments = inputs.get("segments") or [{
             "text": inputs["text"],
             "output_path": inputs.get("output_path", "tts_output.wav"),
@@ -160,7 +168,7 @@ class VieneuTTS(BaseTool):
             out.parent.mkdir(parents=True, exist_ok=True)
             # "wav" returns one 16-bit file; the default "f32" is a raw float stream.
             body = {"text": seg["text"], "voice": seg.get("voice", voice),
-                    "speed": seg.get("speed", speed), "format": "wav"}
+                    "speed": seg.get("speed", speed), "format": "wav", "pronunciation": pronunciation}
             resp = requests.post(f"{_server()}/api/tts/stream", json=body, headers=headers, timeout=600)
             if resp.status_code != 200:
                 return ToolResult(success=False, error=f"VieNeu-TTS server HTTP {resp.status_code}: {resp.text[:500]}")
