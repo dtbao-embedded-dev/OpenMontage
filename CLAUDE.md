@@ -119,14 +119,16 @@ point of the default background.
     --data-binary @request.json --output speech.wav
   ```
 
-  `request.json`: `{"text": "...", "voice": "Hải Đăng", "speed": 1.0, "format": "wav"}`.
+  `request.json`: `{"text": "...", "voice": "Hải Đăng", "speed": 1.0, "format": "wav", "pronunciation": "special"}`.
   `"format": "wav"` is required — the default `"f32"` streams raw float32, not a WAV file.
+  `"pronunciation": "special"` (server ≥ 0.7.0) turns on the server lexicon that fixes the garbled
+  terms below; the default `"normal"` reads the text as typed and still says "bot" / "áp".
   Host: `VOICE_TTS_SERVER` in the repo `.env` (homelab LAN address, port 8760).
   Token: `VOICE_TTS_TOKEN` in the repo `.env` (gitignored); never write the token into this file or any tracked file. The token lives in
   `~/voice-tts/.env` on the server. Check readiness with `voice-tts status --wait 120`.
 - **Homelab only — no local synthesis.** In the pipeline, call tool `vieneu_tts`
   (repo-local `tools/audio/vieneu_tts.py`): it posts to the server above with `"format": "wav"`
-  and never runs a model on this machine. If the server is unreachable or not `ready`,
+  and `"pronunciation": "special"` (tool default) and never runs a model on this machine. If the server is unreachable or not `ready`,
   stop and report it as a blocker — do not fall back to Piper or any other TTS without approval.
 - Output is not deterministic: when one section must be redone, regenerate all sections together.
 - **Narration verify — audio first, then video.** Run the steps in this order:
@@ -153,7 +155,8 @@ point of the default background.
   "có thắc mắc gì về ESP, nhắn tin trực tiếp cho mình nhé, mình trả lời từng người."
 - **Terms the voice garbles:** fixed on the voice-tts server, not in OpenMontage. Keep the term in
   the script and do not rephrase or respell it here. If a term still comes out wrong, stop and
-  report it with the take, the time and what large-v3 heard. Known so far: "board" → "bot", "ESP-NOW" → "ESP-NOV kép" (W spelled as "vê kép"),
+  report it with the take, the time and what large-v3 heard. Known so far (all with `normal`; `special`
+  fixes board → "bo", AP → "ây pi", POST): "board" → "bot", "ESP-NOW" → "ESP-NOV kép" (W spelled as "vê kép"),
   "HTTP POST" → "HTTP phốt", "AP" → "áp".
 - **Closing line:** the last spoken sentence of every video is, verbatim:
   "Có thắc mắc gì về ESP, nhắn tin trực tiếp cho mình nhé, mình trả lời từng người."
