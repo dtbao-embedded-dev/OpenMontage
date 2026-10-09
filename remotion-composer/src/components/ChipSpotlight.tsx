@@ -27,6 +27,8 @@ export interface ChipSpec {
   value: string;
   /** Draw this value in the accent colour (the one key stat of the frame). */
   highlight?: boolean;
+  /** Seconds after cut start when this row appears (sync to narration); default staggers rows from frame 14. */
+  atSeconds?: number;
 }
 
 interface ChipSpotlightProps {
@@ -54,6 +56,8 @@ interface ChipSpotlightProps {
   shadowOpacity?: number;
   /** Hide the accent radial glow behind the board. */
   hideGlow?: boolean;
+  /** Corner radius for a rectangular photo (px); the image is then sized to its own aspect so the corners fit it. */
+  imageRadius?: number;
 }
 
 const FONT = "Inter, 'Segoe UI', system-ui, sans-serif";
@@ -138,6 +142,7 @@ export const ChipSpotlight: React.FC<ChipSpotlightProps> = ({
   dividerColor = "rgba(255,255,255,0.08)",
   shadowOpacity = 0.55,
   hideGlow = false,
+  imageRadius,
 }) => {
   const frame = useCurrentFrame();
   const { fps, width, height } = useVideoConfig();
@@ -191,9 +196,9 @@ export const ChipSpotlight: React.FC<ChipSpotlightProps> = ({
           <Img
             src={resolveAsset(image)}
             style={{
-              width: boardWidth,
-              maxHeight: boardMaxHeight,
-              objectFit: "contain",
+              ...(imageRadius === undefined
+                ? { width: boardWidth, maxHeight: boardMaxHeight, objectFit: "contain" as const }
+                : { maxWidth: boardWidth, maxHeight: boardMaxHeight, width: "auto", height: "auto", borderRadius: imageRadius }),
               transform: `translate(${boardX}px, ${bob}px)`,
               opacity: boardIn,
               filter: `drop-shadow(0 30px 40px rgba(0,0,0,${shadowOpacity}))`,
@@ -240,7 +245,8 @@ export const ChipSpotlight: React.FC<ChipSpotlightProps> = ({
         <div style={{ height: 4, width: interpolate(titleIn, [0, 1], [0, 140]), background: accentColor, borderRadius: 2, margin: "22px 0 14px" }} />
 
         {specs.map((s, i) => {
-          const p = spring({ frame: frame - 14 - i * 7, fps, config: { damping: 18 } });
+          const delay = s.atSeconds === undefined ? 14 + i * 7 : Math.round(s.atSeconds * fps);
+          const p = spring({ frame: frame - delay, fps, config: { damping: 18 } });
           return (
             <div
               key={s.label + i}

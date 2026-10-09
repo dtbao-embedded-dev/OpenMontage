@@ -320,6 +320,7 @@ interface Cut {
   companionAtSeconds?: number;
   eyebrow?: string;
   bestFor?: string;
+  imageRadius?: number; // chip_spotlight: round the corners of a rectangular photo
   // Light-background styling shared by chip_spotlight and letter_grid
   cardBorderColor?: string; // divider / tile border; defaults to the dark-theme faint white
   shadowOpacity?: number;
@@ -767,7 +768,7 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         companionImage={cut.companionImage} companionLabel={cut.companionLabel} companionAtSeconds={cut.companionAtSeconds}
         textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
         surfaceColor={cut.cardBackgroundColor} dividerColor={cut.cardBorderColor}
-        shadowOpacity={cut.shadowOpacity} hideGlow={cut.hideGlow}
+        shadowOpacity={cut.shadowOpacity} hideGlow={cut.hideGlow} imageRadius={cut.imageRadius}
       />
     );
   }
