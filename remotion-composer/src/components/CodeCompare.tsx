@@ -56,7 +56,7 @@ const KEYWORDS = new Set([
   "True", "False", "None", "struct", "uint8_t",
 ]);
 
-function colourise(line: string, ink: string, accent: string, muted: string): React.ReactNode[] {
+export function colourise(line: string, ink: string, accent: string, muted: string): React.ReactNode[] {
   const out: React.ReactNode[] = [];
   const re = /(\/\/.*$|#(?!include).*$|"[^"]*"|'[^']*'|\b\d+\b|[A-Za-z_][A-Za-z0-9_]*|\s+|.)/g;
   let m: RegExpExecArray | null;
