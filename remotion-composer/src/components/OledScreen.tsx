@@ -57,14 +57,13 @@ export interface OledLayer {
   seed?: number;
 }
 
-/** Outline drawn over the panel in panel pixels, with an optional pill label under (or over) it. */
+/** Outline drawn over the panel in panel pixels; its optional label is a pill under the module, clear of the pixels. */
 export interface OledMark {
   x: number;
   y: number;
   w: number;
   h: number;
   label?: string;
-  labelAbove?: boolean;
   tone?: Tone;
   atSeconds?: number;
   untilSeconds?: number;
@@ -140,6 +139,7 @@ const MONO = "'JetBrains Mono', 'Cascadia Code', Consolas, monospace";
 const COLS = 128;
 const UNIT = 10; // SVG units per panel pixel
 const DOT = 8.6; // lit square inside each pixel cell; the rest is the dark gap between OLED pixels
+const MARK = "#FFD54A"; // outline colour on the dark panel (and its label pill)
 
 type Glyph = { adv: number; w: number; h: number; ox: number; oy: number; bits: Uint8Array };
 const glyphCache = new Map<OledFont, Map<string, Glyph>>();
@@ -549,44 +549,52 @@ export const OledScreen: React.FC<OledScreenProps> = ({
               {marks.map((m, i) => {
                 const o = fade(m.atSeconds, m.untilSeconds);
                 if (o <= 0) return null;
-                const c = toneColor(m.tone, "#FFD54A");
-                const lw = (m.label ?? "").length * UNIT * 2.6 + UNIT * 5;
-                // Keep the pill on the panel: flip to the other side, or tuck it inside the outline when neither side fits.
-                const pillH = UNIT * 7;
-                const under = (m.y + m.h) * UNIT + UNIT * 1.2;
-                const over = m.y * UNIT - UNIT * 8.2;
-                const fitsUnder = under + pillH <= rows * UNIT;
-                const fitsOver = over >= 0;
-                const ly = !m.labelAbove
-                  ? fitsUnder ? under : fitsOver ? over : (m.y + m.h) * UNIT - pillH - UNIT
-                  : fitsOver ? over : fitsUnder ? under : m.y * UNIT + UNIT;
-                const lx = Math.max(0, Math.min(COLS * UNIT - lw, (m.x + m.w / 2) * UNIT - lw / 2));
                 return (
-                  <g key={`m${i}`} opacity={o}>
-                    <rect
-                      x={m.x * UNIT - UNIT * 0.6}
-                      y={m.y * UNIT - UNIT * 0.6}
-                      width={m.w * UNIT + UNIT * 1.2}
-                      height={m.h * UNIT + UNIT * 1.2}
-                      fill="none"
-                      stroke={c}
-                      strokeWidth={UNIT * 0.6}
-                      rx={UNIT * 0.6}
-                    />
-                    {m.label && (
-                      <g>
-                        <rect x={lx} y={ly} width={lw} height={UNIT * 7} rx={UNIT * 3.5} fill={c} />
-                        <text x={lx + lw / 2} y={ly + UNIT * 5} textAnchor="middle" fontFamily={FONT} fontSize={UNIT * 4.4} fontWeight={700} fill={c === "#FFD54A" ? "#1D1D1F" : "#FFFFFF"}>
-                          {m.label}
-                        </text>
-                      </g>
-                    )}
-                  </g>
+                  <rect
+                    key={`m${i}`}
+                    opacity={o}
+                    x={m.x * UNIT - UNIT * 0.6}
+                    y={m.y * UNIT - UNIT * 0.6}
+                    width={m.w * UNIT + UNIT * 1.2}
+                    height={m.h * UNIT + UNIT * 1.2}
+                    fill="none"
+                    stroke={toneColor(m.tone, MARK)}
+                    strokeWidth={UNIT * 0.6}
+                    rx={UNIT * 0.6}
+                  />
                 );
               })}
             </g>
           </g>
         </svg>
+        {/* Mark labels sit under the module, never over the pixels; the row keeps its height so nothing shifts. */}
+        {marks.some((m) => m.label) && (
+          <div style={{ position: "relative", height: 62, marginTop: 16 }}>
+            {marks.map((m, i) => {
+              const o = m.label ? fade(m.atSeconds, m.untilSeconds) : 0;
+              if (o <= 0) return null;
+              const c = toneColor(m.tone, MARK);
+              return (
+                <div key={`ml${i}`} style={{ position: "absolute", inset: 0, display: "flex", justifyContent: "center", opacity: o }}>
+                  <div
+                    style={{
+                      padding: "10px 28px",
+                      borderRadius: 31,
+                      background: c,
+                      color: c === MARK ? "#1D1D1F" : "#FFFFFF",
+                      fontSize: 32,
+                      fontWeight: 700,
+                      letterSpacing: "-0.005em",
+                      transform: `translateY(${interpolate(o, [0, 1], [-10, 0])}px)`,
+                    }}
+                  >
+                    {m.label}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
         {caption && (
           <div style={{ marginTop: 14, textAlign: "center", fontSize: 28, letterSpacing: "0.005em", color: mutedColor, opacity: capOp }}>{caption}</div>
         )}
