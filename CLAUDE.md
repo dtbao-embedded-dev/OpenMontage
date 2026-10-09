@@ -139,8 +139,11 @@ point of the default background.
   `python scripts/narrate_sections.py <slug>` (reads `artifacts/script.json` and the lower-case
   `work/tts_text.json`). It runs the steps in this order:
   1. Request the server one section at a time and transcribe each attempt with faster-whisper
-     **`large-v3`** (`language: "vi"`), aligned word by word with the script. A section that
-     fails is regenerated on its own, up to 4 attempts (`assets/audio/takes/<id>/try<k>.wav`).
+     **`large-v3`** (`language: "vi"`), aligned word by word with the script. An attempt passes
+     when at least **85 %** of the checked script words are heard (`--min-score`, user decision
+     2026-10-10); the words it missed are printed again at the end as the list to listen for,
+     and the user decides on them while listening to the full narration. A section below 85 %
+     is regenerated on its own, up to 4 attempts (`assets/audio/takes/<id>/try<k>.wav`).
      A word missed by every attempt is a habit of the voice, not bad luck: the script lists it
      as `missed_every_time` instead of retrying forever. A word whisper always writes
      differently (a unit such as "giây") goes in `--ignore`; a rerun rescores the attempts on
