@@ -543,7 +543,7 @@ export const CircuitDiagram: React.FC<CircuitDiagramProps> = ({
                   <stop offset="100%" stopColor={lit} stopOpacity={0} />
                 </radialGradient>
               </defs>
-              <circle cx={mid[0]} cy={mid[1]} r={R + 20 + 120 * level} fill={`url(#${gid})`} />
+              <circle cx={mid[0]} cy={mid[1]} r={R + 20 + 70 * level} fill={`url(#${gid})`} />
             </g>
           );
           const d = R * 0.7;
