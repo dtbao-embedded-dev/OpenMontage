@@ -12,8 +12,30 @@ export interface CircuitPart {
    * pin: small square on a block edge at `at`, its `text` drawn on the `textAt` side.
    * potentiometer / ldr / capacitor: two-terminal parts from `from` to `to` like a resistor.
    * potentiometer: the wiper arrow points at the body from the `wiperSide`, its tail wired to `at` (the wiper terminal).
+   * led: diode from anode `from` to cathode `to`; its glow follows `levelTrack`.
+   * buzzer: two-terminal disc from `from` to `to`; sound arcs pulse on the `wiperSide` during `sounding` windows.
+   * servo: top view with top-left `at` and size `w` x `h`; the horn turns to `angleTrack` degrees (0 = up, +90 = right).
+   * pwm: mini scope trace with top-left `at` and size `w` x `h`; `periods` square-wave cycles at the `dutyTrack` duty.
    */
-  kind: "wire" | "resistor" | "button" | "ground" | "rail" | "block" | "pin" | "tag" | "cross" | "dot" | "label" | "potentiometer" | "ldr" | "capacitor";
+  kind:
+    | "wire"
+    | "resistor"
+    | "button"
+    | "ground"
+    | "rail"
+    | "block"
+    | "pin"
+    | "tag"
+    | "cross"
+    | "dot"
+    | "label"
+    | "potentiometer"
+    | "ldr"
+    | "capacitor"
+    | "led"
+    | "buzzer"
+    | "servo"
+    | "pwm";
   points?: Pt[];
   from?: Pt;
   to?: Pt;
@@ -41,6 +63,23 @@ export interface CircuitPart {
   wiperSide?: "left" | "right";
   /** potentiometer: wiper position over time as [seconds, fraction 0..1 from `from` to `to`]; default 0.5 throughout. */
   wiperTrack?: [number, number][];
+  /** Ink override (CSS colour) for wires and parts, e.g. servo cable colours or the LED colour. */
+  color?: string;
+  /** led: brightness over time as [seconds, 0..1]; default 1. */
+  levelTrack?: [number, number][];
+  /** buzzer: [start, end] seconds when it sounds. */
+  sounding?: [number, number][];
+  /** servo: horn angle over time as [seconds, degrees -90..90]; default 0. */
+  angleTrack?: [number, number][];
+  /** servo: draw the current angle under the body (default true). */
+  angleLabel?: boolean;
+  /** pwm: duty over time as [seconds, 0..1]; default 0.5. */
+  dutyTrack?: [number, number][];
+  /** pwm: number of periods drawn, may be fractional (default 4). */
+  periods?: number;
+  /** pwm: live readout drawn above the trace's right end: duty in percent, or pulse width in ms (needs `periodMs`). */
+  readout?: "percent" | "ms";
+  periodMs?: number;
 }
 
 interface CircuitDiagramProps {
@@ -122,6 +161,15 @@ export const CircuitDiagram: React.FC<CircuitDiagramProps> = ({
 
   const head = pop(0, 18);
 
+  /** Value of a [seconds, value] track at the current frame; keyframes landing on one frame are nudged apart. */
+  const trackAt = (track: [number, number][] | undefined, fallback: number) => {
+    if (!track || track.length === 0) return fallback;
+    if (track.length === 1) return track[0][1];
+    const frames: number[] = [];
+    for (const [s] of track) frames.push(Math.max(sec(s), frames.length ? frames[frames.length - 1] + 1 : -Infinity));
+    return interpolate(frame, frames, track.map(([, v]) => v), { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  };
+
   const textAnchor = (side: CircuitPart["textAt"], [x, y]: Pt, off: number): { x: number; y: number; anchor: "start" | "middle" | "end" } => {
     switch (side) {
       case "left":
@@ -138,7 +186,7 @@ export const CircuitDiagram: React.FC<CircuitDiagramProps> = ({
   const renderPart = (p: CircuitPart, i: number) => {
     const o = vis(p);
     if (o <= 0.001) return null;
-    const ink = toneColor(p.tone);
+    const ink = p.color ?? toneColor(p.tone);
     const fs = p.fontSize ?? (p.kind === "block" ? 48 : 42);
 
     if (p.kind === "wire" && p.points && p.points.length > 1) {
@@ -185,12 +233,7 @@ export const CircuitDiagram: React.FC<CircuitDiagramProps> = ({
       const ny = ux * side;
       const bl = Math.min(240, L * 0.7);
       const b0 = (L - bl) / 2;
-      const track = p.wiperTrack ?? [];
-      let f = 0.5;
-      if (track.length === 1) f = track[0][1];
-      if (track.length > 1) {
-        f = interpolate(frame, track.map(([s]) => sec(s)), track.map(([, v]) => v), { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-      }
+      const f = trackAt(p.wiperTrack, 0.5);
       const along0 = b0 + bl * (0.12 + 0.76 * f);
       const tip: Pt = [x1 + ux * along0 + nx * 30, y1 + uy * along0 + ny * 30];
       const tail: Pt = [tip[0] + nx * 80, tip[1] + ny * 80];
@@ -287,6 +330,116 @@ export const CircuitDiagram: React.FC<CircuitDiagramProps> = ({
       );
     }
 
+    if ((p.kind === "led" || p.kind === "buzzer") && p.from && p.to) {
+      const [x1, y1] = p.from;
+      const [x2, y2] = p.to;
+      const L = Math.hypot(x2 - x1, y2 - y1);
+      const ux = (x2 - x1) / L;
+      const uy = (y2 - y1) / L;
+      const ang = (Math.atan2(y2 - y1, x2 - x1) * 180) / Math.PI;
+      const mid: Pt = [(x1 + x2) / 2, (y1 + y2) / 2];
+      const stroke = toneColor(p.tone);
+      let glow: React.ReactNode = null;
+      let body: React.ReactNode;
+      let waves: React.ReactNode = null;
+      let off = 70;
+      let side0: CircuitPart["textAt"] = "left";
+      if (p.kind === "led") {
+        // Triangle points from anode to cathode; the light colour fills it and a halo grows with the level.
+        const level = Math.max(0, Math.min(1, trackAt(p.levelTrack, 1)));
+        const lit = p.color ?? "#FF3B30";
+        const tw = 64;
+        const a = (L - tw) / 2;
+        const gid = `led-glow-${i}-${Math.round(x1)}-${Math.round(y1)}`;
+        const arrow = (sx: number) => (
+          <g key={sx} stroke={lit} strokeWidth={4} strokeLinecap="round" fill={lit} opacity={0.25 + 0.75 * level}>
+            <line x1={sx} y1={-50} x2={sx + 20} y2={-84} />
+            <polygon points={`${sx + 27},${-96} ${sx + 9},${-84} ${sx + 26},${-74}`} stroke="none" />
+          </g>
+        );
+        glow = (
+          <g>
+            <defs>
+              <radialGradient id={gid}>
+                <stop offset="0%" stopColor={lit} stopOpacity={0.85 * level} />
+                <stop offset="45%" stopColor={lit} stopOpacity={0.35 * level} />
+                <stop offset="100%" stopColor={lit} stopOpacity={0} />
+              </radialGradient>
+            </defs>
+            <circle cx={mid[0]} cy={mid[1]} r={50 + 110 * level} fill={`url(#${gid})`} />
+          </g>
+        );
+        body = (
+          <>
+            <line x1={0} y1={0} x2={a} y2={0} stroke={stroke} strokeWidth={STROKE} strokeLinecap="round" />
+            <polygon points={`${a},${-36} ${a},${36} ${a + tw},0`} fill={lit} fillOpacity={0.12 + 0.88 * level} stroke={stroke} strokeWidth={STROKE} strokeLinejoin="round" />
+            <line x1={a + tw} y1={-38} x2={a + tw} y2={38} stroke={stroke} strokeWidth={STROKE + 1} strokeLinecap="round" />
+            <line x1={a + tw} y1={0} x2={L} y2={0} stroke={stroke} strokeWidth={STROKE} strokeLinecap="round" />
+            {arrow(a + 8)}
+            {arrow(a + 36)}
+          </>
+        );
+      } else {
+        // Disc with a piezo element; while sounding, three arcs ripple out on the wiperSide.
+        const R = 48;
+        off = R + 34;
+        const side = p.wiperSide === "left" ? -1 : 1;
+        const nx = -uy * side;
+        const ny = ux * side;
+        // The label defaults to the side opposite the sound arcs.
+        side0 = nx < -0.5 ? "right" : nx > 0.5 ? "left" : ny < 0 ? "below" : "above";
+        const win =(p.sounding ?? []).find(([s, e]) => frame >= sec(s) && frame < sec(e));
+        if (win) {
+          const el = (frame - sec(win[0])) / fps;
+          const th = Math.atan2(ny, nx);
+          const sw = (40 * Math.PI) / 180;
+          waves = [0, 1, 2].map((k) => {
+            const ph = (el * 2.5 + k / 3) % 1;
+            const r = R + 18 + ph * 80;
+            const [sx, sy] = [mid[0] + r * Math.cos(th - sw), mid[1] + r * Math.sin(th - sw)];
+            const [ex, ey] = [mid[0] + r * Math.cos(th + sw), mid[1] + r * Math.sin(th + sw)];
+            return (
+              <path
+                key={k}
+                d={`M${sx},${sy} A${r},${r} 0 0 1 ${ex},${ey}`}
+                fill="none"
+                stroke={p.color ?? accentColor}
+                strokeWidth={5}
+                strokeLinecap="round"
+                opacity={(1 - ph) * Math.min(1, el * 4)}
+              />
+            );
+          });
+        }
+        body = (
+          <>
+            <line x1={0} y1={0} x2={L / 2 - R} y2={0} stroke={stroke} strokeWidth={STROKE} strokeLinecap="round" />
+            <circle cx={L / 2} cy={0} r={R} fill="#FFFFFF" stroke={stroke} strokeWidth={STROKE} />
+            <circle cx={L / 2} cy={0} r={20} fill={stroke} fillOpacity={0.12} stroke={stroke} strokeWidth={3} />
+            <line x1={L / 2 + R} y1={0} x2={L} y2={0} stroke={stroke} strokeWidth={STROKE} strokeLinecap="round" />
+          </>
+        );
+      }
+      const t = textAnchor(p.textAt ?? side0, mid, off);
+      return (
+        <g key={i} opacity={o}>
+          {glow}
+          <g transform={`translate(${x1},${y1}) rotate(${ang})`}>{body}</g>
+          {waves}
+          {p.text && (
+            <text x={t.x} y={t.y + (p.sub ? -6 : fs * 0.35)} textAnchor={t.anchor} fontFamily={FONT} fontSize={fs} fontWeight={700} fill={stroke}>
+              {p.text}
+            </text>
+          )}
+          {p.sub && (
+            <text x={t.x} y={t.y + fs * 0.35 + 34} textAnchor={t.anchor} fontFamily={FONT} fontSize={34} fontWeight={400} fill={mutedColor}>
+              {p.sub}
+            </text>
+          )}
+        </g>
+      );
+    }
+
     if ((p.kind === "resistor" || p.kind === "button") && p.from && p.to) {
       const [x1, y1] = p.from;
       const [x2, y2] = p.to;
@@ -349,6 +502,92 @@ export const CircuitDiagram: React.FC<CircuitDiagramProps> = ({
 
     if (!p.at) return null;
     const [x, y] = p.at;
+
+    if (p.kind === "servo") {
+      // Top view: body with mounting ears, output shaft near one end, horn rotating over a dashed -90..+90 range.
+      const w = p.w ?? 340;
+      const h = p.h ?? 170;
+      const angle = trackAt(p.angleTrack, 0);
+      const sx = x + w * 0.7;
+      const sy = y + h / 2;
+      const hl = h * 0.95;
+      const R = hl + 26;
+      const deg = Math.round(angle);
+      const ear = (ex: number) => (
+        <g key={ex}>
+          <rect x={ex} y={sy - h * 0.21} width={44} height={h * 0.42} rx={8} fill="#FFFFFF" stroke={ink} strokeWidth={4} />
+          <circle cx={ex + 22} cy={sy} r={7} fill="none" stroke={ink} strokeWidth={3} />
+        </g>
+      );
+      return (
+        <g key={i} opacity={o}>
+          <path d={`M${sx - R},${sy} A${R},${R} 0 0 1 ${sx + R},${sy}`} fill="none" stroke={mutedColor} strokeWidth={3} strokeDasharray="10 10" />
+          {ear(x - 44)}
+          {ear(x + w)}
+          <rect x={x} y={y} width={w} height={h} rx={22} fill="rgba(0,102,204,0.06)" stroke={ink} strokeWidth={STROKE} />
+          {/* Name under the body, clear of the horn's sweep; the angle readout sits under the shaft. */}
+          {p.text && (
+            <text x={x + w * 0.25} y={y + h + 66} textAnchor="middle" fontFamily={FONT} fontSize={fs} fontWeight={700} fill={ink}>
+              {p.text}
+            </text>
+          )}
+          <g transform={`translate(${sx},${sy}) rotate(${angle})`}>
+            <rect x={-17} y={-hl} width={34} height={hl + 17} rx={17} fill="#FFFFFF" stroke={ink} strokeWidth={4} />
+            <circle cx={0} cy={-hl + 20} r={6} fill="none" stroke={ink} strokeWidth={3} />
+            <circle cx={0} cy={-hl * 0.55} r={6} fill="none" stroke={ink} strokeWidth={3} />
+            <circle cx={0} cy={0} r={26} fill="#FFFFFF" stroke={ink} strokeWidth={4} />
+            <circle cx={0} cy={0} r={8} fill={accentColor} />
+          </g>
+          {p.angleLabel !== false && (
+            <text x={sx} y={y + h + 66} textAnchor="middle" fontFamily={FONT} fontSize={52} fontWeight={700} fill={accentColor}>
+              {`${deg > 0 ? "+" : deg < 0 ? "−" : ""}${Math.abs(deg)}°`}
+            </text>
+          )}
+        </g>
+      );
+    }
+
+    if (p.kind === "pwm") {
+      // Square wave at the current duty, redrawn every frame, with an optional live readout.
+      const w = p.w ?? 400;
+      const h = p.h ?? 120;
+      const duty = Math.max(0, Math.min(1, trackAt(p.dutyTrack, 0.5)));
+      const n = p.periods ?? 4;
+      const pw = w / n;
+      const yH = y;
+      const yL = y + h;
+      const c = p.color ?? (p.tone ? toneColor(p.tone) : accentColor);
+      let d = `M${x},${yL}`;
+      if (duty >= 0.999) d += ` V${yH} H${x + w}`;
+      else if (duty <= 0.001) d += ` H${x + w}`;
+      // A fractional `periods` (e.g. note frequencies in ratio) ends the last cycle at the right edge.
+      else
+        for (let k = 0; k * pw < w - 0.5; k++)
+          d += ` H${x + k * pw} V${yH} H${Math.min(x + (k + duty) * pw, x + w)} V${yL} H${Math.min(x + (k + 1) * pw, x + w)}`;
+      const value =
+        p.readout === "ms" && p.periodMs
+          ? `${(duty * p.periodMs).toFixed(1).replace(".", ",")} ms`
+          : p.readout === "percent"
+            ? `${Math.round(duty * 100)} %`
+            : null;
+      const halo = { stroke: "#FFFFFF", strokeWidth: 8, paintOrder: "stroke" as const, strokeLinejoin: "round" as const };
+      return (
+        <g key={i} opacity={o}>
+          <line x1={x} y1={yL} x2={x + w} y2={yL} stroke="rgba(0,0,0,0.18)" strokeWidth={3} />
+          <path d={d} fill="none" stroke={c} strokeWidth={STROKE} strokeLinejoin="round" strokeLinecap="round" />
+          {p.text && (
+            <text x={x} y={y - 24} fontFamily={FONT} fontSize={34} fontWeight={600} fill={mutedColor} {...halo}>
+              {p.text}
+            </text>
+          )}
+          {value && (
+            <text x={x + w} y={y - 24} textAnchor="end" fontFamily={FONT} fontSize={fs} fontWeight={700} fill={c} {...halo}>
+              {value}
+            </text>
+          )}
+        </g>
+      );
+    }
 
     if (p.kind === "ground") {
       return (
