@@ -1,6 +1,6 @@
-"""VieNeu-TTS Vietnamese text-to-speech via the homelab voice-tts server.
+"""VieNeu-TTS Vietnamese text-to-speech via a remote voice-tts server.
 
-Synthesis runs only on the homelab server (E:/Baotd/software/apps/voice-tts — FastAPI
+Synthesis runs only on the remote server (E:/Baotd/software/apps/voice-tts — FastAPI
 around VieNeu-TTS v3 Turbo, https://github.com/pnnbao97/VieNeu-TTS, Apache-2.0). Nothing
 runs on this machine. Configure:
 
@@ -53,7 +53,7 @@ class VieneuTTS(BaseTool):
 
     dependencies = ["env:VOICE_TTS_SERVER", "env:VOICE_TTS_TOKEN", "python:requests"]
     install_instructions = (
-        "Point this tool at the homelab voice-tts server:\n"
+        "Point this tool at the remote voice-tts server:\n"
         "  VOICE_TTS_SERVER=http://<host>:8760\n"
         "  VOICE_TTS_TOKEN=<token from ~/voice-tts/.env on the server>\n"
         "Server install: python docs/scripts/tool-install.py --remote user@host "
@@ -71,12 +71,12 @@ class VieneuTTS(BaseTool):
         "native_audio": True,
     }
     best_for = [
-        "natural Vietnamese narration, free, on the homelab server",
+        "natural Vietnamese narration, free, on the remote voice-tts server",
         "Vietnamese text mixed with English technical terms",
     ]
     not_good_for = [
         "non-Vietnamese narration",
-        "work when the homelab server is unreachable",
+        "work when the voice-tts server is unreachable",
     ]
 
     input_schema = {
@@ -117,7 +117,7 @@ class VieneuTTS(BaseTool):
     )
     retry_policy = RetryPolicy(max_retries=1, retryable_errors=["ConnectionError", "Timeout"])
     idempotency_key_fields = ["text", "voice", "speed", "pronunciation", "segments"]
-    side_effects = ["writes audio file(s) to output_path", "calls the homelab voice-tts server"]
+    side_effects = ["writes audio file(s) to output_path", "calls the remote voice-tts server"]
     user_visible_verification = ["Listen to generated audio for pronunciation"]
 
     def get_status(self) -> ToolStatus:
@@ -187,5 +187,5 @@ class VieneuTTS(BaseTool):
                 "sample_rate": SAMPLE_RATE,
             },
             artifacts=outputs,
-            model="VieNeu-TTS-v3-Turbo (homelab voice-tts)",
+            model="VieNeu-TTS-v3-Turbo (voice-tts server)",
         )
