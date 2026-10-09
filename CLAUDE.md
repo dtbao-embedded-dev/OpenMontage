@@ -145,7 +145,7 @@ point of the default background.
   music-only tail; ignore text past the last narration section.
 - **Terms the voice garbles:** fixed on the voice-tts server, not in OpenMontage. Keep the term in
   the script and do not rephrase or respell it here. If a term still comes out wrong, stop and
-  report it with the take, the time and what large-v3 heard. Known so far: "board" → "bot",
+  report it with the take, the time and what large-v3 heard. Known so far: "board" → "bot", "ESP-NOW" → "ESP-NOV kép" (W spelled as "vê kép"),
   "HTTP POST" → "HTTP phốt", "AP" → "áp".
 - **Closing line:** the last spoken sentence of every video is, verbatim:
   "Có thắc mắc gì về ESP, nhắn tin trực tiếp cho mình nhé, mình trả lời từng người."
