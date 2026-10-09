@@ -1,8 +1,8 @@
-"""VieNeu-TTS Vietnamese text-to-speech via a remote voice-tts server.
+"""VieNeu-TTS Vietnamese text-to-speech via a voice-tts server.
 
-Synthesis runs only on the remote server (E:/Baotd/software/apps/voice-tts — FastAPI
-around VieNeu-TTS v3 Turbo, https://github.com/pnnbao97/VieNeu-TTS, Apache-2.0). Nothing
-runs on this machine. Configure:
+Synthesis runs on the voice-tts server (E:/Baotd/software/apps/voice-tts — FastAPI
+around VieNeu-TTS v3 Turbo, https://github.com/pnnbao97/VieNeu-TTS, Apache-2.0), local
+(http://127.0.0.1:8760) or remote; this tool only sends HTTP requests. Configure:
 
     VOICE_TTS_SERVER=http://<host>:8760
     VOICE_TTS_TOKEN=<token>          # from ~/voice-tts/.env on the server
@@ -71,7 +71,7 @@ class VieneuTTS(BaseTool):
         "native_audio": True,
     }
     best_for = [
-        "natural Vietnamese narration, free, on the remote voice-tts server",
+        "natural Vietnamese narration, free, on a voice-tts server",
         "Vietnamese text mixed with English technical terms",
     ]
     not_good_for = [
@@ -117,7 +117,7 @@ class VieneuTTS(BaseTool):
     )
     retry_policy = RetryPolicy(max_retries=1, retryable_errors=["ConnectionError", "Timeout"])
     idempotency_key_fields = ["text", "voice", "speed", "pronunciation", "segments"]
-    side_effects = ["writes audio file(s) to output_path", "calls the remote voice-tts server"]
+    side_effects = ["writes audio file(s) to output_path", "calls the voice-tts server"]
     user_visible_verification = ["Listen to generated audio for pronunciation"]
 
     def get_status(self) -> ToolStatus:

@@ -109,9 +109,9 @@ point of the default background.
 ### Voice (Vietnamese narration)
 
 - VieNeu-TTS, voice **"Hải Đăng"**, raw text (its g2p handles English terms; no phonetic respelling).
-- **Primary: the remote voice-tts server** (`E:\Baotd\software\apps\voice-tts`, same VieNeu v3 Turbo
-  model, 48 kHz, same voice names). The homelab server is retired (2026-10-09); the new host
-  is pending:
+- **The voice-tts server** (`E:\Baotd\software\apps\voice-tts`, VieNeu v3 Turbo model, 48 kHz).
+  It may run on this machine (the VoiceTTS tray app, `http://127.0.0.1:8760`) or on a remote
+  host; both are fine. The homelab server is retired (2026-10-09):
 
   ```sh
   curl -f -X POST http://<host>:8760/api/tts/stream \
@@ -125,13 +125,13 @@ point of the default background.
   `"pronunciation": "special"` (server ≥ 0.7.0) turns on the server lexicon that fixes the garbled
   terms below; the default `"normal"` reads the text as typed and still says "bot" / "áp".
   Host: `VOICE_TTS_SERVER` in the repo `.env` (port 8760). Never point it back at the retired
-  homelab address. Until the new host is set, `vieneu_tts` is unavailable and narration is a blocker.
+  homelab address.
   Token: `VOICE_TTS_TOKEN` in the repo `.env` (gitignored); never write the token into this file or any tracked file. The token lives in
   `~/voice-tts/.env` on the server. Check readiness with `voice-tts status --wait 120`.
-- **Remote server only — no local synthesis.** In the pipeline, call tool `vieneu_tts`
-  (repo-local `tools/audio/vieneu_tts.py`): it posts to the server above with `"format": "wav"`
-  and `"pronunciation": "special"` (tool default) and never runs a model on this machine. If the server is unreachable or not `ready`,
-  stop and report it as a blocker — do not fall back to Piper or any other TTS without approval.
+- In the pipeline, call tool `vieneu_tts` (repo-local `tools/audio/vieneu_tts.py`): it posts to
+  `VOICE_TTS_SERVER` with `"format": "wav"` and `"pronunciation": "special"` (tool default).
+  If the server is unreachable or not `ready`, stop and report it as a blocker — do not fall back
+  to Piper or any other TTS without approval.
 - Output is not deterministic: when one section must be redone, regenerate all sections together.
 - **Narration verify — audio first, then video.** Run the steps in this order:
   1. Request the server for each script section (all sections together, several full takes).
