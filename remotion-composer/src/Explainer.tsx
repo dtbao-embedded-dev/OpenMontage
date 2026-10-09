@@ -1113,8 +1113,10 @@ export const Explainer: React.FC<ExplainerProps> = (props) => {
 
       {/* Layer 1: Visual scenes */}
       {cuts.map((cut) => {
+        // End on the frame the next cut starts on: rounding the length separately left a one-frame gap
+        // (the bare animated background) between back-to-back cuts whose times are not frame-aligned.
         const from = Math.round(cut.in_seconds * fps);
-        const duration = Math.round((cut.out_seconds - cut.in_seconds) * fps);
+        const duration = Math.max(1, Math.round(cut.out_seconds * fps) - from);
 
         return (
           <Sequence key={cut.id} from={from} durationInFrames={duration}>
@@ -1126,9 +1128,7 @@ export const Explainer: React.FC<ExplainerProps> = (props) => {
       {/* Layer 2: Overlays (section titles, stat reveals, hero titles) */}
       {overlays?.map((overlay, i) => {
         const from = Math.round(overlay.in_seconds * fps);
-        const duration = Math.round(
-          (overlay.out_seconds - overlay.in_seconds) * fps
-        );
+        const duration = Math.max(1, Math.round(overlay.out_seconds * fps) - from);
 
         return (
           <Sequence key={`overlay-${i}`} from={from} durationInFrames={duration}>
