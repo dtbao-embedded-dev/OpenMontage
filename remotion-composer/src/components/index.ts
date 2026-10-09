@@ -22,6 +22,7 @@ export { WifiTopology } from "./WifiTopology";
 export { MetricBars } from "./MetricBars";
 export { CircuitDiagram } from "./CircuitDiagram";
 export { LogicWave } from "./LogicWave";
+export { OledScreen } from "./OledScreen";
 export type { ParticleType } from "./ParticleOverlay";
 export type { CameraMotion, AnimeSceneProps } from "./AnimeScene";
 export type { TerminalStep } from "./TerminalScene";
@@ -33,3 +34,4 @@ export type { TopologyIcon, TopologyLink, TopologyNode, TopologyPacket, Topology
 export type { MetricRow } from "./MetricBars";
 export type { CircuitPart } from "./CircuitDiagram";
 export type { WavePanel, WaveTrace } from "./LogicWave";
+export type { OledLayer, OledMark, OledPages, OledByte, OledCodeHighlight } from "./OledScreen";

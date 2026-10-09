@@ -52,6 +52,8 @@ import { CircuitDiagram } from "./components/CircuitDiagram";
 import type { CircuitPart } from "./components/CircuitDiagram";
 import { LogicWave } from "./components/LogicWave";
 import type { WavePanel } from "./components/LogicWave";
+import { OledScreen } from "./components/OledScreen";
+import type { OledByte, OledCodeHighlight, OledLayer, OledMark, OledPages } from "./components/OledScreen";
 import { resolveAsset } from "./lib/resolveAsset";
 import type { ParticleType } from "./components/ParticleOverlay";
 import { resolveTheme, type ThemeConfig, DEFAULT_THEME } from "./Root";
@@ -371,6 +373,21 @@ interface Cut {
   wavePanels?: WavePanel[];
   waveCaption?: string;
   waveCaptionAtSeconds?: number;
+  // OLED screen props (type: "oled_screen"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`, `code`, `codeTitle`,
+  // `codeAtSeconds`, `codeRevealSeconds`, `codeFontSize`)
+  oledLayers?: OledLayer[];
+  oledRows?: number;
+  oledColor?: "white" | "blue" | "yellow-blue";
+  oledPins?: string[];
+  oledBoardWidth?: number;
+  oledMarks?: OledMark[];
+  oledPages?: OledPages;
+  oledByte?: OledByte;
+  oledGridAtSeconds?: number;
+  oledGridUntilSeconds?: number;
+  oledCaption?: string;
+  oledCaptionAtSeconds?: number;
+  codeHighlights?: OledCodeHighlight[];
 }
 
 interface Overlay {
@@ -869,6 +886,22 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
       <LogicWave
         name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline}
         panels={cut.wavePanels} caption={cut.waveCaption} captionAtSeconds={cut.waveCaptionAtSeconds} points={cut.points}
+        textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
+        surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
+      />
+    );
+  }
+
+  if (cut.type === "oled_screen" && cut.name && cut.oledLayers) {
+    return maybeWrapWithBg(
+      <OledScreen
+        name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline}
+        layers={cut.oledLayers} rows={cut.oledRows} panelColor={cut.oledColor} pins={cut.oledPins} boardWidth={cut.oledBoardWidth}
+        marks={cut.oledMarks} pages={cut.oledPages} byte={cut.oledByte}
+        gridAtSeconds={cut.oledGridAtSeconds} gridUntilSeconds={cut.oledGridUntilSeconds}
+        caption={cut.oledCaption} captionAtSeconds={cut.oledCaptionAtSeconds}
+        code={cut.code} codeTitle={cut.codeTitle} codeAtSeconds={cut.codeAtSeconds} codeRevealSeconds={cut.codeRevealSeconds}
+        codeFontSize={cut.codeFontSize} codeHighlights={cut.codeHighlights} points={cut.points}
         textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
         surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
       />
