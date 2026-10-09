@@ -46,6 +46,8 @@ import { CoreTimeline } from "./components/CoreTimeline";
 import type { TimelineLane, TimelineLog } from "./components/CoreTimeline";
 import { WifiTopology } from "./components/WifiTopology";
 import type { TopologyLink, TopologyNode, TopologyRange } from "./components/WifiTopology";
+import { MetricBars } from "./components/MetricBars";
+import type { MetricRow } from "./components/MetricBars";
 import { resolveAsset } from "./lib/resolveAsset";
 import type { ParticleType } from "./components/ParticleOverlay";
 import { resolveTheme, type ThemeConfig, DEFAULT_THEME } from "./Root";
@@ -350,6 +352,13 @@ interface Cut {
   links?: TopologyLink[];
   ranges?: TopologyRange[];
   diagramHeight?: number;
+  // Metric bars props (type: "metric_bars"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
+  metricRows?: MetricRow[];
+  metricScale?: "linear" | "log";
+  metricBaseline?: number;
+  metricMax?: number;
+  metricSource?: string;
+  metricSourceAtSeconds?: number;
 }
 
 interface Overlay {
@@ -814,6 +823,18 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline}
         nodes={cut.nodes} links={cut.links} ranges={cut.ranges} diagramHeight={cut.diagramHeight}
         points={cut.points} log={cut.timelineLog}
+        textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
+        surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
+      />
+    );
+  }
+
+  if (cut.type === "metric_bars" && cut.name && cut.metricRows) {
+    return maybeWrapWithBg(
+      <MetricBars
+        name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline}
+        rows={cut.metricRows} scale={cut.metricScale} baseline={cut.metricBaseline} maxValue={cut.metricMax}
+        source={cut.metricSource} sourceAtSeconds={cut.metricSourceAtSeconds} points={cut.points}
         textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
         surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
       />
