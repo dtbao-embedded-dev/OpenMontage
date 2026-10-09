@@ -132,17 +132,28 @@ point of the default background.
   `VOICE_TTS_SERVER` with `"format": "wav"` and `"pronunciation": "special"` (tool default).
   If the server is unreachable or not `ready`, stop and report it as a blocker — do not fall back
   to Piper or any other TTS without approval.
-- Output is not deterministic: when one section must be redone, regenerate all sections together.
-- **Narration verify — audio first, then video.** Run the steps in this order:
-  1. Request the server for each script section (all sections together, several full takes).
-  2. Before any scene plan or video render, transcribe every section of every take with
-     faster-whisper **`large-v3`** (`language: "vi"`). Compare it with the script sentence by
-     sentence. Check both the Vietnamese words and the English terms whose meaning changes
-     when misread (e.g. "board" heard as "bot"/"both").
-  3. Adopt the cleanest take. If no take passes, regenerate. Build the video only from audio
-     that passed.
+- Output is not deterministic, but sections are independent: the tool sends every section as its
+  own request (no shared seed or session), so one section is regenerated alone and sections from
+  different attempts are combined freely.
+- **Narration verify — audio first, then video.** Run
+  `python scripts/narrate_sections.py <slug>` (reads `artifacts/script.json` and the lower-case
+  `work/tts_text.json`). It runs the steps in this order:
+  1. Request the server one section at a time and transcribe each attempt with faster-whisper
+     **`large-v3`** (`language: "vi"`), aligned word by word with the script. A section that
+     fails is regenerated on its own, up to 4 attempts (`assets/audio/takes/<id>/try<k>.wav`).
+     A word missed by every attempt is a habit of the voice, not bad luck: the script lists it
+     as `missed_every_time` instead of retrying forever. A word whisper always writes
+     differently (a unit such as "giây") goes in `--ignore`; a rerun rescores the attempts on
+     disk without regenerating them. `--redo <id>` starts a section over.
+  2. When every section passes, lock them: gain-match to their median loudness, flag a speech
+     rate more than 15 % off the median, join them into `work/narration_full.wav` and run a
+     large-v3 listen-back on the whole narration. Build the scene plan and the video only after
+     the script exits 0, and only from these files, so the visuals stay in sync with the voice.
+  3. The automatic check covers words with Vietnamese diacritics only. Read the HEARD text it
+     prints for every section for the English terms whose meaning changes when misread
+     (e.g. "board" heard as "bot"/"both").
   4. After the video render, run a final large-v3 listen-back on the audio of the full render.
-     It catches mix and cut problems. It does not replace step 2.
+     It catches mix and cut problems. It does not replace steps 1–2.
 
   small and medium mishear both ways, so they are not a pronunciation check (small stays the
   timing source, see Sync). large-v3 invents phrases such as "Cảm ơn các bạn đã theo dõi" on a
