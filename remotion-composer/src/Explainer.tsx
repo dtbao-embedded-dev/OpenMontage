@@ -48,6 +48,10 @@ import { WifiTopology } from "./components/WifiTopology";
 import type { TopologyLink, TopologyNode, TopologyRange } from "./components/WifiTopology";
 import { MetricBars } from "./components/MetricBars";
 import type { MetricRow } from "./components/MetricBars";
+import { CircuitDiagram } from "./components/CircuitDiagram";
+import type { CircuitPart } from "./components/CircuitDiagram";
+import { LogicWave } from "./components/LogicWave";
+import type { WavePanel } from "./components/LogicWave";
 import { resolveAsset } from "./lib/resolveAsset";
 import type { ParticleType } from "./components/ParticleOverlay";
 import { resolveTheme, type ThemeConfig, DEFAULT_THEME } from "./Root";
@@ -360,6 +364,13 @@ interface Cut {
   metricMax?: number;
   metricSource?: string;
   metricSourceAtSeconds?: number;
+  // Circuit diagram props (type: "circuit_diagram"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
+  circuitParts?: CircuitPart[];
+  circuitViewHeight?: number;
+  // Logic wave props (type: "logic_wave"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
+  wavePanels?: WavePanel[];
+  waveCaption?: string;
+  waveCaptionAtSeconds?: number;
 }
 
 interface Overlay {
@@ -836,6 +847,28 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline}
         rows={cut.metricRows} scale={cut.metricScale} baseline={cut.metricBaseline} maxValue={cut.metricMax}
         source={cut.metricSource} sourceAtSeconds={cut.metricSourceAtSeconds} points={cut.points}
+        textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
+        surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
+      />
+    );
+  }
+
+  if (cut.type === "circuit_diagram" && cut.name && cut.circuitParts) {
+    return maybeWrapWithBg(
+      <CircuitDiagram
+        name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline}
+        parts={cut.circuitParts} viewHeight={cut.circuitViewHeight} points={cut.points}
+        textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
+        surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
+      />
+    );
+  }
+
+  if (cut.type === "logic_wave" && cut.name && cut.wavePanels) {
+    return maybeWrapWithBg(
+      <LogicWave
+        name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline}
+        panels={cut.wavePanels} caption={cut.waveCaption} captionAtSeconds={cut.waveCaptionAtSeconds} points={cut.points}
         textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
         surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
       />
