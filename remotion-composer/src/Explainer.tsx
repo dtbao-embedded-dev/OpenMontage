@@ -64,6 +64,8 @@ import { RfidLock } from "./components/RfidLock";
 import type { RfidCard, RfidPanelsAt, RfidReader, RfidWhitelistEntry } from "./components/RfidLock";
 import { IrRemote } from "./components/IrRemote";
 import type { IrAcState, IrButton, IrLearned, IrShot, IrStrip } from "./components/IrRemote";
+import { CanBus } from "./components/CanBus";
+import type { CanAck, CanArb, CanField, CanFrameRow, CanGauge, CanInfo, CanNode, CanObdPin, CanPacket, CanPin, CanStatus } from "./components/CanBus";
 import { AirRoom } from "./components/AirRoom";
 import type { AirClock, AirItem, AirParticles, AirReadout, AirWindowState } from "./components/AirRoom";
 import { GnssSky } from "./components/GnssSky";
@@ -472,6 +474,25 @@ interface Cut {
   irIdleStatus?: string;
   irCaption?: string;
   irCaptionAtSeconds?: number;
+  // CAN bus props (type: "can_bus"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
+  canView?: "car" | "bus" | "frame" | "obd";
+  canFrames?: CanFrameRow[];
+  canGauges?: CanGauge[];
+  canFormula?: { lines: { text: string; atSeconds?: number; tone?: CanInfo["tone"] }[]; title?: string; atSeconds?: number };
+  canNodes?: CanNode[];
+  canPackets?: CanPacket[];
+  canTerminators?: { label?: string; atSeconds?: number };
+  canPins?: CanPin[];
+  canPinsTitle?: string;
+  canFields?: CanField[];
+  canArb?: CanArb;
+  canAck?: CanAck;
+  canObdPins?: CanObdPin[];
+  canObdPhoto?: { src: string; label?: string };
+  canInfo?: CanInfo[];
+  canStatus?: CanStatus[];
+  canCaption?: string;
+  canCaptionAtSeconds?: number;
   // Air room props (type: "air_room"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
   airParticles?: AirParticles[];
   airItems?: AirItem[];
@@ -1279,6 +1300,21 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         learned={cut.irLearned} learnedTitle={cut.irLearnedTitle} learnedAtSeconds={cut.irLearnedAtSeconds}
         strips={cut.irStrips} stripBlock={cut.irStripBlock} stripFix={cut.irStripFix} stripsAtSeconds={cut.irStripsAtSeconds}
         idleStatus={cut.irIdleStatus} caption={cut.irCaption} captionAtSeconds={cut.irCaptionAtSeconds} points={cut.points}
+        textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
+        surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
+      />
+    );
+  }
+
+  if (cut.type === "can_bus" && cut.name) {
+    return maybeWrapWithBg(
+      <CanBus
+        name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline} view={cut.canView}
+        frames={cut.canFrames} gauges={cut.canGauges} formula={cut.canFormula}
+        nodes={cut.canNodes} packets={cut.canPackets} terminators={cut.canTerminators} pins={cut.canPins} pinsTitle={cut.canPinsTitle}
+        fields={cut.canFields} arb={cut.canArb} ack={cut.canAck}
+        obdPins={cut.canObdPins} obdPhoto={cut.canObdPhoto} info={cut.canInfo} status={cut.canStatus}
+        caption={cut.canCaption} captionAtSeconds={cut.canCaptionAtSeconds} points={cut.points}
         textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
         surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
       />
