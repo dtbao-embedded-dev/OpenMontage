@@ -76,3 +76,5 @@ export type { IrAcState, IrButton, IrLearned, IrShot, IrStrip } from "./IrRemote
 export type { CellBench, CellBridge, CellChart, CellReadout, CellStep, CellWiring, CellWeight, CellPin, CellColumn, CellWire, CellSeries, CellTone } from "./LoadCell";
 export type { GnssProgress, GnssReadout, GnssSat, GnssStatus, GnssSystem, GnssTimer, GnssWindow } from "./GnssSky";
 export type { NmeaStep, NmeaTone } from "./NmeaFields";
+export { LoraLink } from "./LoraLink";
+export type { LoraBandMarker, LoraBands, LoraBandSegment, LoraChirpRow, LoraChirps, LoraGauge, LoraNode, LoraPacket, LoraProfile, LoraStatus } from "./LoraLink";
