@@ -60,6 +60,8 @@ import { FlashMap } from "./components/FlashMap";
 import type { FlashGroup, FlashLegendItem, FlashLink, FlashMeter, FlashPower } from "./components/FlashMap";
 import { PhoneGatt } from "./components/PhoneGatt";
 import type { GattDialog, GattLogLine, GattRow, GattSideItem, GattValue } from "./components/PhoneGatt";
+import { BrowserPage } from "./components/BrowserPage";
+import type { BrowserCard, BrowserFrameLine, BrowserLedState, BrowserValue, BrowserWindow } from "./components/BrowserPage";
 import { resolveAsset } from "./lib/resolveAsset";
 import type { ParticleType } from "./components/ParticleOverlay";
 import { resolveTheme, type ThemeConfig, DEFAULT_THEME } from "./Root";
@@ -430,6 +432,20 @@ interface Cut {
   gattLog?: GattLogLine[];
   gattLogTitle?: string;
   gattLogLines?: number;
+  // Browser page props (type: "browser_page"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
+  browserWindows?: BrowserWindow[];
+  browserPageTitle?: string;
+  browserCards?: BrowserCard[];
+  browserLed?: BrowserLedState[];
+  browserLedLabel?: string;
+  browserStatus?: BrowserValue[];
+  browserFrames?: BrowserFrameLine[];
+  browserFramesTitle?: string;
+  browserFramesLines?: number;
+  browserEspLabel?: string;
+  browserEspAtSeconds?: number;
+  browserEspLed?: BrowserLedState[];
+  browserCaption?: string;
 }
 
 interface Overlay {
@@ -983,6 +999,20 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         screenTitle={cut.gattScreenTitle} status={cut.gattStatus} rows={cut.gattRows} dialog={cut.gattDialog}
         phoneCaption={cut.gattPhoneCaption} sideTitle={cut.gattSideTitle} side={cut.gattSide}
         log={cut.gattLog} logTitle={cut.gattLogTitle} logLines={cut.gattLogLines} points={cut.points}
+        textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
+        surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
+      />
+    );
+  }
+
+  if (cut.type === "browser_page" && cut.name && cut.browserWindows) {
+    return maybeWrapWithBg(
+      <BrowserPage
+        name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline}
+        windows={cut.browserWindows} pageTitle={cut.browserPageTitle} cards={cut.browserCards} led={cut.browserLed}
+        ledLabel={cut.browserLedLabel} status={cut.browserStatus} frames={cut.browserFrames} framesTitle={cut.browserFramesTitle}
+        framesLines={cut.browserFramesLines} espLabel={cut.browserEspLabel} espAtSeconds={cut.browserEspAtSeconds} espLed={cut.browserEspLed}
+        caption={cut.browserCaption} points={cut.points}
         textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
         surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
       />
