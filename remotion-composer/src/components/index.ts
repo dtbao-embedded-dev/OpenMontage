@@ -28,6 +28,7 @@ export { FlashMap } from "./FlashMap";
 export { PhoneGatt } from "./PhoneGatt";
 export { BrowserPage } from "./BrowserPage";
 export { PhoneProv } from "./PhoneProv";
+export { TlsCert } from "./TlsCert";
 export type { ParticleType } from "./ParticleOverlay";
 export type { CameraMotion, AnimeSceneProps } from "./AnimeScene";
 export type { TerminalStep } from "./TerminalScene";
@@ -45,3 +46,4 @@ export type { FlashCell, FlashGroup, FlashLegendItem, FlashLink, FlashMeter, Fla
 export type { BrowserCard, BrowserFrameLine, BrowserLedState, BrowserValue, BrowserWindow } from "./BrowserPage";
 export type { GattAction, GattDialog, GattLogLine, GattRow, GattSideItem, GattTap, GattValue } from "./PhoneGatt";
 export type { ProvLogLine, ProvNetwork, ProvScreen, ProvSideItem, ProvStep } from "./PhoneProv";
+export type { CertCard, CertClock, CertClockPoint, CertLog, CertLogLine, CertRow, CertTone, CertVerdict } from "./TlsCert";
