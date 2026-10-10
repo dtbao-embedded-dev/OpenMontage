@@ -50,6 +50,8 @@ import { MetricBars } from "./components/MetricBars";
 import type { MetricRow } from "./components/MetricBars";
 import { BoardMatrix } from "./components/BoardMatrix";
 import type { MatrixBoard, MatrixRow, MatrixFocus, MatrixVerdict } from "./components/BoardMatrix";
+import { BeamCone } from "./components/BeamCone";
+import type { ConeBeam, ConeObject, ConeMyth, ConeSensor } from "./components/BeamCone";
 import { GnssSky } from "./components/GnssSky";
 import type { GnssProgress, GnssReadout, GnssSat, GnssStatus, GnssTimer, GnssWindow } from "./components/GnssSky";
 import { NmeaFields } from "./components/NmeaFields";
@@ -404,6 +406,15 @@ interface Cut {
   matrixImageHeight?: number;
   matrixSource?: string;
   matrixSourceAtSeconds?: number;
+  // Beam cone props (type: "beam_cone"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
+  coneBeams?: ConeBeam[];
+  coneSensors?: ConeSensor[];
+  coneObjects?: ConeObject[];
+  coneMyth?: ConeMyth;
+  coneRangeMeters?: number;
+  coneViewHeight?: number;
+  coneCaption?: string;
+  coneCaptionAtSeconds?: number;
   // GNSS sky props (type: "gnss_sky"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
   skySats?: GnssSat[];
   skyRoof?: GnssWindow[];
@@ -1063,6 +1074,19 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline}
         boards={cut.matrixBoards} rows={cut.matrixRows} focus={cut.matrixFocus} verdicts={cut.matrixVerdicts}
         imageHeight={cut.matrixImageHeight} source={cut.matrixSource} sourceAtSeconds={cut.matrixSourceAtSeconds} points={cut.points}
+        textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
+        surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
+      />
+    );
+  }
+
+  if (cut.type === "beam_cone" && cut.name && cut.coneBeams) {
+    return maybeWrapWithBg(
+      <BeamCone
+        name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline}
+        beams={cut.coneBeams} sensors={cut.coneSensors} objects={cut.coneObjects} myth={cut.coneMyth}
+        rangeMeters={cut.coneRangeMeters} viewHeight={cut.coneViewHeight}
+        caption={cut.coneCaption} captionAtSeconds={cut.coneCaptionAtSeconds} points={cut.points}
         textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
         surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
       />
