@@ -166,7 +166,9 @@ export const WifiTopology: React.FC<WifiTopologyProps> = ({
   const portrait = height > width;
   const t = frame / fps;
   const at = (s: number | undefined, fallback: number) => Math.round((s ?? fallback) * fps);
-  const pop = (start: number, damping = 16) => spring({ frame: frame - start, fps, config: { damping, stiffness: 120 } });
+  // Anything due at frame 0 (heading, diagram card) is drawn fully from the first frame, so a cut into this scene never shows a
+  // blank background.
+  const pop = (start: number, damping = 16) => (start <= 0 ? 1 : spring({ frame: frame - start, fps, config: { damping, stiffness: 120 } }));
 
   const sidePad = portrait ? (layout === "centered" ? 120 : 88) : 140;
   const rightPad = portrait ? (layout === "centered" ? 120 : 160) : 140;
@@ -185,7 +187,7 @@ export const WifiTopology: React.FC<WifiTopologyProps> = ({
   };
 
   const head = pop(0, 18);
-  const card = pop(4, 20);
+  const card = pop(0, 20);
 
   return (
     <AbsoluteFill
