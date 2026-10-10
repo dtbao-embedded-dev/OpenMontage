@@ -37,11 +37,15 @@ A brief that explicitly asks for something different overrides a rule; say so wh
   no spaces, no Vietnamese diacritics), then the local time the render finished.
   Example: `esp32-series-lineup-20261008-1123.mp4`. Pass it as the render `output_path`.
   If two variants finish in the same minute, add the aspect: `-916` (9:16) / `-169` (16:9).
-- **Release:** after every render, copy the video to `E:\Baotd\media\release\Learining-ESP32\`
-  (ESP32 learning series; user decision 2026-10-10, folder name spelled as the user created it)
-  as `Video <N> <Title>.mp4` — ready to post as is. `N` = highest `N` already in `release` or any
-  of its subfolders + 1 (`1` when empty), in delivery order. `Title` = the script title in Vietnamese with
-  diacritics and spaces (this folder is exempt from the workspace naming rule); replace `:`
+- **Release:** after every render, copy the video to its series folder under
+  `E:\Baotd\media\release\` (user decision 2026-10-10; folder names spelled as the user created them):
+  - `Learining-ESP32\` — the ESP32 learning series. The default.
+  - `News-ESP32\` — news videos: only when the brief asks for a news video or for this folder.
+
+  Name the copy `Video <N> <Title>.mp4` — ready to post as is. `N` = highest `N` already in that
+  series folder + 1 (`1` when empty), in delivery order; each series counts on its own.
+  `Title` = the script title in Vietnamese with
+  diacritics and spaces (these folders are exempt from the workspace naming rule); replace `:`
   with ` -` and drop `? * " < > | / \`, which Windows forbids. Example:
   `Video 4 Arduino, ESP-IDF hay MicroPython trên ESP32-S3.mp4`. A re-render of a delivered
   video replaces its file and keeps its number. The render in `projects/` keeps the
