@@ -52,6 +52,8 @@ import { BoardMatrix } from "./components/BoardMatrix";
 import type { MatrixBoard, MatrixRow, MatrixFocus, MatrixVerdict } from "./components/BoardMatrix";
 import { BeamCone } from "./components/BeamCone";
 import type { ConeBeam, ConeObject, ConeMyth, ConeSensor } from "./components/BeamCone";
+import { StepperDrive } from "./components/StepperDrive";
+import type { StepperMotor } from "./components/StepperDrive";
 import { RfidLock } from "./components/RfidLock";
 import type { RfidCard, RfidPanelsAt, RfidReader, RfidWhitelistEntry } from "./components/RfidLock";
 import { IrRemote } from "./components/IrRemote";
@@ -421,6 +423,11 @@ interface Cut {
   coneViewHeight?: number;
   coneCaption?: string;
   coneCaptionAtSeconds?: number;
+  // Stepper drive props (type: "stepper_drive"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
+  stepperMotors?: StepperMotor[];
+  stepperHidePlot?: boolean;
+  stepperCaption?: string;
+  stepperCaptionAtSeconds?: number;
   // RFID lock props (type: "rfid_lock"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
   rfidReader?: RfidReader;
   rfidCards?: RfidCard[];
@@ -1134,6 +1141,18 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         beams={cut.coneBeams} sensors={cut.coneSensors} objects={cut.coneObjects} myth={cut.coneMyth}
         rangeMeters={cut.coneRangeMeters} viewHeight={cut.coneViewHeight}
         caption={cut.coneCaption} captionAtSeconds={cut.coneCaptionAtSeconds} points={cut.points}
+        textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
+        surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
+      />
+    );
+  }
+
+  if (cut.type === "stepper_drive" && cut.name && cut.stepperMotors) {
+    return maybeWrapWithBg(
+      <StepperDrive
+        name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline}
+        motors={cut.stepperMotors} hidePlot={cut.stepperHidePlot}
+        caption={cut.stepperCaption} captionAtSeconds={cut.stepperCaptionAtSeconds} points={cut.points}
         textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
         surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
       />
