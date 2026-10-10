@@ -75,6 +75,8 @@ export type { RfidCard, RfidPanelsAt, RfidReader, RfidWhitelistEntry } from "./R
 export type { IrAcState, IrButton, IrLearned, IrShot, IrStrip } from "./IrRemote";
 export { CanBus } from "./CanBus";
 export type { CanAck, CanArb, CanByteGroup, CanField, CanFrameRow, CanGauge, CanInfo, CanNode, CanObdPin, CanPacket, CanPin, CanStatus } from "./CanBus";
+export { RtosSync } from "./RtosSync";
+export type { RtBlock, RtCode, RtInfo, RtInvPanel, RtLane, RtLink, RtLogLine, RtNode, RtPacket, RtStack, RtState, RtStatus } from "./RtosSync";
 export type { CellBench, CellBridge, CellChart, CellReadout, CellStep, CellWiring, CellWeight, CellPin, CellColumn, CellWire, CellSeries, CellTone } from "./LoadCell";
 export type { GnssProgress, GnssReadout, GnssSat, GnssStatus, GnssSystem, GnssTimer, GnssWindow } from "./GnssSky";
 export type { NmeaStep, NmeaTone } from "./NmeaFields";
