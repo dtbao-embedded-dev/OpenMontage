@@ -151,8 +151,9 @@ point of the default background.
      attempts on disk without regenerating them. `--redo <id>` starts a section over.
   2. When every section passes, lock them: gain-match to their median loudness, flag a speech
      rate more than 15 % off the median, join them into `work/narration_full.wav` and check the
-     whole narration in one pass. Build the scene plan and the video only after the script exits
-     0, and only from these files, so the visuals stay in sync with the voice.
+     whole narration in one pass, then write the word timestamps of the locked files to
+     `work/word_timings.json` (see Sync). Build the scene plan and the video only after the
+     script exits 0, and only from these files, so the visuals stay in sync with the voice.
   3. The automatic check covers words with Vietnamese diacritics only, number words included
      (the recogniser writes them as words). Unit words (vôn, héc, mê, lô, ôm, oát, mét, xăng)
      are ignored by default: it writes them as ASCII ("vun", "vol") or drops them. Initials that
@@ -186,16 +187,22 @@ point of the default background.
 ### Sync (visuals ↔ narration)
 
 - Time every on-screen change inside a narration section (chip switch, tile/label reveal,
-  highlighted number) from **word timestamps measured with faster-whisper** — tool
-  `transcriber`, `language: "vi"`, `model_size: "small"` — on the final narration WAVs.
+  highlighted number) from **word timestamps measured with Zipformer** (`zipformer_vi_asr`,
+  user decision 2026-10-10, replacing whisper small): `scripts/narrate_sections.py` writes them
+  from the locked `narration_<id>.wav` files to `work/word_timings.json`
+  (`{id: {"duration", "words": [{"word", "start", "end"}]}}`) — no separate align step.
   Never estimate from syllable counts or guess which silence ends which sentence.
-- Re-run the transcription whenever narration is regenerated (output is not deterministic).
+- Word starts land a median ~50 ms after the speech onset (|error| median 90 ms, p90 120 ms over
+  235 onsets of four videos; whisper small was 60 / 130 ms with more outliers).
+- Anchors use the recogniser's spelling: lower case, no punctuation, numbers as words ("hai",
+  "mươi", never "20mhz"), English terms as Vietnamese syllables ("i sp ba hai"). Prefer a
+  Vietnamese word with diacritics next to the cue; look the word up in `word_timings.json`.
+- Every narration rerun rewrites `word_timings.json`: re-check every anchor. The first rerun
+  over a whisper-era file keeps it as `word_timings_whisper.json` and prints a warning.
 - Transcripts are timing data only: no caption track, no subtitles on screen
   (see "No running captions").
 - Every scene must show its main text or image from its first frames; never leave a scene
   showing only a small title while the voice is already speaking.
-- Setup: `faster-whisper` in the repo `.venv` with `av==16.1.0` — PyAV 17+ dropped the
-  `metadata_errors` argument faster-whisper 1.2.1 passes (`TypeError` on `av.open`).
 
 ### Render
 
