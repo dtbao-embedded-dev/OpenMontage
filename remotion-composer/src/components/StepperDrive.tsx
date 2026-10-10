@@ -187,7 +187,8 @@ export const StepperDrive: React.FC<StepperDriveProps> = ({
     const n = MICRO[mode];
     const chop = held(m.chopperTrack, t, "stealth" as StepChopper);
     const amp = chop === "chop" ? 0.16 : chop === "spread" ? 0.06 : 0;
-    const p = positionAt(m, t);
+    // Start one plot span in, so the coil-current plot already holds history on the cut's first frame.
+    const p = positionAt(m, t) + 8;
     const speed = m.speedTrack && m.speedTrack.length ? linear(m.speedTrack, t) : m.speed ?? 2;
     const { k, theta } = quantised(p, n);
     // Rotor: settles on the commanded angle with a damped overshoot after each jump (bigger jumps ring more).
