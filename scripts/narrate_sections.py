@@ -1,7 +1,9 @@
 """Generate and verify Vietnamese narration one section at a time.
 
 Each script section is synthesised with `vieneu_tts`, transcribed with
-faster-whisper large-v3 and aligned word by word with the script. An attempt
+`zipformer_vi_asr` (Zipformer-30M, CPU, ~0.2 s a section) and aligned word by
+word with the script. The check is relative: it sorts attempts and lists what to
+listen for; the user's own listen decides. An attempt
 passes when at least --min-score (default 85 %) of the checked script words
 are heard; the words it missed are still printed, for the user to judge while
 listening to the full narration. A section that passes is adopted; one that
@@ -14,13 +16,16 @@ consistent as the sections of one take. Once every section passes:
   2. a section whose speech rate is more than 15 % off the median is flagged
      (reported, never changed);
   3. the adopted sections are joined into work/narration_full.wav, and the whole
-     file is transcribed with large-v3 and checked against the full script with
+     file is transcribed in one pass and checked against the full script with
      the same --min-score;
   4. every word the adopted sections missed is listed once more, to listen for.
 
-Build the scene plan and the video only after this exits 0.
+Build the scene plan and the video only after this exits 0. After the render,
+--listen <video> checks the render's audio against the full script the same way
+(work/listen_report.json) and touches nothing else.
 
-    python scripts/narrate_sections.py <slug> [--tries 4] [--min-score 0.85] [--redo s2 s5] [--ignore giây vôn]
+    python scripts/narrate_sections.py <slug> [--tries 4] [--min-score 0.85] [--redo s2 s5] [--ignore lặp]
+    python scripts/narrate_sections.py <slug> --listen projects/<slug>/renders/<render>.mp4
 
 Reads projects/<slug>/artifacts/script.json (section id and text: the reference
 for the check) and projects/<slug>/work/tts_text.json (id -> the lower-case text
@@ -30,9 +35,10 @@ adding --ignore words never costs a regeneration. --redo renames the attempts of
 those sections to try<k>.rejected.wav and starts them over.
 
 The automatic check covers words with Vietnamese diacritics. All-ASCII words
-(English terms, and Vietnamese words without marks) and number words are left
-out because whisper spells them freely: read the HEARD text printed for every
-section for terms whose meaning changes when misread ("board" -> "bot"). The
+(English terms, and Vietnamese words without marks such as "dung") are left out
+because the recogniser hears English terms as Vietnamese syllables, and so are
+unit words, which it writes as ASCII ("vôn" -> "vun", "vol"): read the HEARD text
+printed for every section for terms whose meaning changes when misread. The
 voice speaks Northern Vietnamese, where the initials ch/tr, d/gi/r and s/x sound
 alike, so a word heard with the other spelling ("trục" for "chục") still counts.
 
@@ -56,16 +62,14 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
-from tools.analysis.transcriber import Transcriber  # noqa: E402
+from tools.analysis.zipformer_vi_asr import ZipformerViASR  # noqa: E402
 from tools.audio.vieneu_tts import VieneuTTS  # noqa: E402
 
 VOICE = "Hải Đăng"
-# Whisper writes number words as digits, and hears "lặp" as "lập" on every take.
-IGNORE = {
-    "không", "một", "mốt", "hai", "ba", "bốn", "tư", "năm", "lăm", "sáu", "bảy", "tám",
-    "chín", "mười", "mươi", "linh", "lẻ", "trăm", "nghìn", "ngàn", "triệu", "phẩy", "nửa",
-    "lặp",
-}
+# Unit words the recogniser writes as ASCII or drops ("vôn" -> "vun"/"vol", "mê héc" -> "").
+# Rescoring 222 attempts of nine videos, they were the most missed words on adopted takes;
+# with them ignored every adopted take passes. Number words stay checked: it writes them as words.
+IGNORE = {"vôn", "héc", "mê", "lô", "ôm", "oát", "mét", "xăng"}
 PEAK_CEILING_DB = -1.0
 RATE_TOLERANCE = 0.15
 # Share of checked script words an attempt must be heard saying (user decision 2026-10-10:
@@ -114,11 +118,9 @@ def compare(expected: str, heard: str, ignore: set[str]) -> tuple[list[dict], li
 
 
 def transcribe(wav: Path, out_dir: Path) -> dict:
-    cached = out_dir / f"{wav.stem}_transcript.json"
-    if cached.exists() and cached.stat().st_mtime >= wav.stat().st_mtime:
-        return json.loads(cached.read_text(encoding="utf-8"))
-    r = Transcriber().execute({"input_path": str(wav), "model_size": "large-v3",
-                               "language": "vi", "output_dir": str(out_dir)})
+    # No cache: a section decodes in ~0.2 s, so every run hears the file as it is now.
+    r = ZipformerViASR().execute({"input_path": str(wav),
+                                  "output_path": str(out_dir / f"{wav.stem}_transcript.json")})
     if not r.success:
         raise SetupError(f"transcription failed for {wav}: {r.error}")
     return r.data
@@ -162,7 +164,7 @@ def attempts(sec_dir: Path) -> tuple[list[Path], int]:
 def narrate_section(sid: str, text: str, tts_text: str, base: Path, args, ignore: set[str]) -> dict:
     sec_dir = base / "assets" / "audio" / "takes" / sid
     sec_dir.mkdir(parents=True, exist_ok=True)
-    out_dir = base / "work" / "transcripts_large" / sid
+    out_dir = base / "work" / "transcripts_asr" / sid
     if sid in args.redo:
         for p in sec_dir.glob("try*[0-9].wav"):
             p.rename(p.with_name(f"{p.stem}.rejected.wav"))
@@ -244,6 +246,22 @@ def join(sections: list[dict], base: Path, gap: float) -> Path:
     return full
 
 
+def listen(media: Path, script: dict, base: Path, ignore: set[str], min_score: float) -> int:
+    """Final listen-back: check a render's audio (music and all) against the full script."""
+    if not media.exists():
+        raise SetupError(f"{media} not found")
+    expected = " ".join(s["text"] for s in script["sections"])
+    res = score(media, expected, base / "work" / "transcripts_asr", ignore, min_score)
+    print(f"render listen-back ({media.name}): {'PASS' if res['passed'] else 'FAIL'}  match {res['match']:.1%}")
+    for m in res["misses"]:
+        print(f"   missing '{m['expected']}' heard '{m['heard']}'  ({m['context']})")
+    print(f"HEARD: {res['heard']}")
+    (base / "work" / "listen_report.json").write_text(
+        json.dumps({"media": str(media), **res}, ensure_ascii=False, indent=2), encoding="utf-8")
+    print("PASSED" if res["passed"] else "FAILED", "- report in work/listen_report.json")
+    return 0 if res["passed"] else 1
+
+
 def main() -> int:
     sys.stdout.reconfigure(encoding="utf-8", line_buffering=True)
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
@@ -253,8 +271,10 @@ def main() -> int:
                     help=f"share of checked script words an attempt must be heard saying (default {MIN_SCORE})")
     ap.add_argument("--redo", nargs="+", default=[], metavar="ID", help="section ids to start over")
     ap.add_argument("--ignore", nargs="+", default=[], metavar="WORD",
-                    help="extra words whisper writes differently on every take (units such as giây, vôn)")
+                    help="extra words the recogniser writes differently on every take")
     ap.add_argument("--gap", type=float, default=0.5, help="silence between sections in the joined file (s)")
+    ap.add_argument("--listen", metavar="MEDIA",
+                    help="only check this file's audio (the render) against the full script")
     args = ap.parse_args()
 
     base = REPO_ROOT / "projects" / args.slug
@@ -264,11 +284,13 @@ def main() -> int:
         if not ffmpeg:
             raise SetupError("ffmpeg not found on PATH")
         script = json.loads((base / "artifacts" / "script.json").read_text(encoding="utf-8"))
+        if not 0 < args.min_score <= 1:
+            raise SetupError("--min-score must be in (0, 1]")
+        if args.listen:
+            return listen(Path(args.listen), script, base, ignore, args.min_score)
         tts = json.loads((base / "work" / "tts_text.json").read_text(encoding="utf-8"))
         if args.tries < 1:
             raise SetupError("--tries must be at least 1")
-        if not 0 < args.min_score <= 1:
-            raise SetupError("--min-score must be in (0, 1]")
         missing = [s["id"] for s in script["sections"] if s["id"] not in tts]
         if missing:
             raise SetupError(f"tts_text.json has no text for {missing}")
@@ -283,7 +305,7 @@ def main() -> int:
             adopt(sections, base, ffmpeg)
             full = join(sections, base, args.gap)
             expected = " ".join(s["text"] for s in script["sections"])
-            res = score(full, expected, base / "work" / "transcripts_large", ignore, args.min_score)
+            res = score(full, expected, base / "work" / "transcripts_asr", ignore, args.min_score)
             report["full"] = res
             report["passed"] = res["passed"]
             print(f"full listen-back ({full.name}): {'PASS' if res['passed'] else 'FAIL'}  match {res['match']:.1%}")
