@@ -62,3 +62,36 @@ def test_nothing_checkable_passes(ns, monkeypatch, tmp_path):
 
 def test_default_threshold_is_85_percent(ns):
     assert ns.MIN_SCORE == 0.85
+
+
+def test_number_words_are_checked(ns, monkeypatch, tmp_path):
+    # The recogniser writes numbers as words, so a wrong number is a miss.
+    _hear(ns, monkeypatch, "mười tám chân có sẵn")
+    r = ns.score(tmp_path / "try1.wav", "mười bảy chân có sẵn", tmp_path, ns.IGNORE, 0.85)
+    assert [m["expected"] for m in r["misses"]] == ["bảy"]
+
+
+def test_unit_words_are_ignored(ns, monkeypatch, tmp_path):
+    # "vôn" comes out as "vun"/"vol" and "mê héc" is dropped: neither counts as a miss.
+    _hear(ns, monkeypatch, "hai trăm hai mươi vun tốc độ bốn mươi")
+    r = ns.score(tmp_path / "try1.wav", "hai trăm hai mươi vôn, tốc độ bốn mươi mê héc",
+                 tmp_path, ns.IGNORE, 0.85)
+    assert r["misses"] == []
+    assert r["match"] == 1.0
+
+
+def test_listen_checks_media_against_the_whole_script(ns, monkeypatch, tmp_path):
+    base = tmp_path / "projects" / "demo"
+    (base / "artifacts").mkdir(parents=True)
+    (base / "work").mkdir()
+    (base / "artifacts" / "script.json").write_text(
+        '{"sections": [{"id": "s1", "text": "chạm ngón tay"}, {"id": "s2", "text": "nhận ra ngay"}]}',
+        encoding="utf-8")
+    render = tmp_path / "render.mp4"
+    render.write_bytes(b"")
+    _hear(ns, monkeypatch, "chạm ngón tay nhận ra ngay")
+    monkeypatch.setattr(ns, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr("sys.argv", ["narrate_sections.py", "demo", "--listen", str(render)])
+    assert ns.main() == 0
+    assert (base / "work" / "listen_report.json").exists()
+    assert not (base / "work" / "narration_report.json").exists()
