@@ -62,6 +62,8 @@ import { PhoneGatt } from "./components/PhoneGatt";
 import type { GattDialog, GattLogLine, GattRow, GattSideItem, GattValue } from "./components/PhoneGatt";
 import { BrowserPage } from "./components/BrowserPage";
 import type { BrowserCard, BrowserFrameLine, BrowserLedState, BrowserValue, BrowserWindow } from "./components/BrowserPage";
+import { PhoneProv } from "./components/PhoneProv";
+import type { ProvLogLine, ProvScreen, ProvSideItem } from "./components/PhoneProv";
 import { resolveAsset } from "./lib/resolveAsset";
 import type { ParticleType } from "./components/ParticleOverlay";
 import { resolveTheme, type ThemeConfig, DEFAULT_THEME } from "./Root";
@@ -446,6 +448,14 @@ interface Cut {
   browserEspAtSeconds?: number;
   browserEspLed?: BrowserLedState[];
   browserCaption?: string;
+  // Provisioning app props (type: "phone_prov"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
+  provScreens?: ProvScreen[];
+  provPhoneCaption?: string;
+  provSideTitle?: string;
+  provSide?: ProvSideItem[];
+  provLog?: ProvLogLine[];
+  provLogTitle?: string;
+  provLogLines?: number;
 }
 
 interface Overlay {
@@ -999,6 +1009,18 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         screenTitle={cut.gattScreenTitle} status={cut.gattStatus} rows={cut.gattRows} dialog={cut.gattDialog}
         phoneCaption={cut.gattPhoneCaption} sideTitle={cut.gattSideTitle} side={cut.gattSide}
         log={cut.gattLog} logTitle={cut.gattLogTitle} logLines={cut.gattLogLines} points={cut.points}
+        textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
+        surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
+      />
+    );
+  }
+
+  if (cut.type === "phone_prov" && cut.name && cut.provScreens) {
+    return maybeWrapWithBg(
+      <PhoneProv
+        name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline} screens={cut.provScreens}
+        phoneCaption={cut.provPhoneCaption} sideTitle={cut.provSideTitle} side={cut.provSide}
+        log={cut.provLog} logTitle={cut.provLogTitle} logLines={cut.provLogLines} points={cut.points}
         textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
         surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
       />
