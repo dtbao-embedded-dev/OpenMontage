@@ -42,13 +42,16 @@ A brief that explicitly asks for something different overrides a rule; say so wh
   - `Learining-ESP32\` — the ESP32 learning series. The default.
   - `News-ESP32\` — news videos: only when the brief asks for a news video or for this folder.
 
-  Name the copy `Video <N> <Title>.mp4` — ready to post as is. `N` = highest `N` already in that
-  series folder + 1 (`1` when empty), in delivery order; each series counts on its own.
+  Name the copy — ready to post as is:
+  - `Learining-ESP32\`: `Video <N> <Title>.mp4`. `N` = highest `N` already in that folder + 1
+    (`1` when empty), in delivery order.
+  - `News-ESP32\`: `<Title>.mp4` — no `Video <N>` prefix (user decision 2026-10-10).
+
   `Title` = the script title in Vietnamese with
   diacritics and spaces (these folders are exempt from the workspace naming rule); replace `:`
   with ` -` and drop `? * " < > | / \`, which Windows forbids. Example:
   `Video 4 Arduino, ESP-IDF hay MicroPython trên ESP32-S3.mp4`. A re-render of a delivered
-  video replaces its file and keeps its number. The render in `projects/` keeps the
+  video replaces its file (and keeps its number). The render in `projects/` keeps the
   `<topic>-<YYYYMMDD-HHMM>.mp4` name. The user reviews only what is in the release folder — a
   render not copied there is not delivered.
 
