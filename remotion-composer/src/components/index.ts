@@ -26,6 +26,7 @@ export { OledScreen } from "./OledScreen";
 export { TouchPad } from "./TouchPad";
 export { FlashMap } from "./FlashMap";
 export { PhoneGatt } from "./PhoneGatt";
+export { WledApp } from "./WledApp";
 export { BrowserPage } from "./BrowserPage";
 export { PhoneProv } from "./PhoneProv";
 export { TlsCert } from "./TlsCert";
@@ -45,5 +46,6 @@ export type { TouchPadDef, TouchFinger, TouchDrop, TouchGridWindow, TouchGuard, 
 export type { FlashCell, FlashGroup, FlashLegendItem, FlashLink, FlashMeter, FlashPower, FlashState, FlashStep } from "./FlashMap";
 export type { BrowserCard, BrowserFrameLine, BrowserLedState, BrowserValue, BrowserWindow } from "./BrowserPage";
 export type { GattAction, GattDialog, GattLogLine, GattRow, GattSideItem, GattTap, GattValue } from "./PhoneGatt";
+export type { WledAudio, WledNetwork, WledPacket, WledRow, WledScreen, WledSegment, WledStep, WledStrip } from "./WledApp";
 export type { ProvLogLine, ProvNetwork, ProvScreen, ProvSideItem, ProvStep } from "./PhoneProv";
 export type { CertCard, CertClock, CertClockPoint, CertLog, CertLogLine, CertRow, CertTone, CertVerdict } from "./TlsCert";
