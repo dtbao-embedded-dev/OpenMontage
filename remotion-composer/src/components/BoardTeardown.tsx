@@ -140,7 +140,7 @@ export const BoardTeardown: React.FC<BoardTeardownProps> = ({
     oy: interpolate(move, [0, 1], [from.oy, to.oy]),
   };
 
-  const enter = hasHeader ? 1 : spring({ frame, fps, config: { damping: 18 } });
+  const enter = 1; // drawn from the first frame, so a cut into this scene never shows a blank background
   const r = spot.region;
   // A spot that repeats the previous region / text (e.g. only adds a note) keeps the outline and the card
   // text on screen instead of fading them out and back in.
@@ -153,7 +153,7 @@ export const BoardTeardown: React.FC<BoardTeardownProps> = ({
   const pulse = 1 + 0.25 * Math.max(0, Math.sin((frame - starts[idx]) / 7));
   const pad = 10;
 
-  const cardIn = spring({ frame: frame - starts[idx] - (idx === 0 ? 0 : 4), fps, config: { damping: 18 } });
+  const cardIn = idx === 0 ? 1 : spring({ frame: frame - starts[idx] - 4, fps, config: { damping: 18 } });
   const cardSettled = idx === 0 ? Math.max(cardIn, enter) : sameText ? 1 : cardIn;
   const noteIn = sameText && spot.note !== prev?.note ? cardIn : 1;
 
