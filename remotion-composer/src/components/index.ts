@@ -23,6 +23,7 @@ export { MetricBars } from "./MetricBars";
 export { BoardMatrix } from "./BoardMatrix";
 export { CircuitDiagram } from "./CircuitDiagram";
 export { LogicWave } from "./LogicWave";
+export { ImuScope } from "./ImuScope";
 export { OledScreen } from "./OledScreen";
 export { TouchPad } from "./TouchPad";
 export { FlashMap } from "./FlashMap";
