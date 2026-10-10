@@ -56,6 +56,8 @@ import { OledScreen } from "./components/OledScreen";
 import type { OledByte, OledCodeHighlight, OledKnob, OledLayer, OledMark, OledPages } from "./components/OledScreen";
 import { TouchPad } from "./components/TouchPad";
 import type { TouchChart, TouchDrop, TouchFinger, TouchGridWindow, TouchGuard, TouchPadDef, TouchWire } from "./components/TouchPad";
+import { FlashMap } from "./components/FlashMap";
+import type { FlashGroup, FlashLegendItem, FlashLink, FlashMeter, FlashPower } from "./components/FlashMap";
 import { resolveAsset } from "./lib/resolveAsset";
 import type { ParticleType } from "./components/ParticleOverlay";
 import { resolveTheme, type ThemeConfig, DEFAULT_THEME } from "./Root";
@@ -407,6 +409,14 @@ interface Cut {
   touchPausedLabel?: string;
   touchCaption?: string;
   touchCaptionAtSeconds?: number;
+  // Flash map props (type: "flash_map"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
+  flashGroups?: FlashGroup[];
+  flashLinks?: FlashLink[];
+  flashPower?: FlashPower[];
+  flashMeters?: FlashMeter[];
+  flashLegend?: FlashLegendItem[];
+  flashCaption?: string;
+  flashCaptionAtSeconds?: number;
 }
 
 interface Overlay {
@@ -935,6 +945,18 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         flood={cut.touchFlood} grid={cut.touchGrid} wires={cut.touchWires} guard={cut.touchGuard} chart={cut.touchChart} meters={cut.touchMeters}
         activeLabel={cut.touchActiveLabel} falseLabel={cut.touchFalseLabel} pausedLabel={cut.touchPausedLabel}
         caption={cut.touchCaption} captionAtSeconds={cut.touchCaptionAtSeconds} points={cut.points}
+        textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
+        surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
+      />
+    );
+  }
+
+  if (cut.type === "flash_map" && cut.name && cut.flashGroups) {
+    return maybeWrapWithBg(
+      <FlashMap
+        name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline}
+        groups={cut.flashGroups} links={cut.flashLinks} power={cut.flashPower} meters={cut.flashMeters} legend={cut.flashLegend}
+        caption={cut.flashCaption} captionAtSeconds={cut.flashCaptionAtSeconds} points={cut.points}
         textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
         surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
       />
