@@ -53,6 +53,8 @@ import type { MatrixBoard, MatrixRow, MatrixFocus, MatrixVerdict } from "./compo
 import { CircuitDiagram } from "./components/CircuitDiagram";
 import type { CircuitPart } from "./components/CircuitDiagram";
 import { LogicWave } from "./components/LogicWave";
+import { ImuScope } from "./components/ImuScope";
+import type { ImuBand, ImuFormula, ImuLine, ImuMarker, ImuPose, ImuReadout, ImuSeries, ImuSpectrum, ImuStatus } from "./components/ImuScope";
 import type { WavePanel } from "./components/LogicWave";
 import { OledScreen } from "./components/OledScreen";
 import type { OledByte, OledCodeHighlight, OledKnob, OledLayer, OledMark, OledPages } from "./components/OledScreen";
@@ -401,6 +403,27 @@ interface Cut {
   wavePanels?: WavePanel[];
   waveCaption?: string;
   waveCaptionAtSeconds?: number;
+  // IMU scope props (type: "imu_scope"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
+  imuRate?: number;
+  imuSeries?: ImuSeries[];
+  imuPlotTitle?: string;
+  imuYMin?: number;
+  imuYMax?: number;
+  imuYTicks?: { v: number; label: string }[];
+  imuSpanSeconds?: number;
+  imuScroll?: boolean;
+  imuLines?: ImuLine[];
+  imuBands?: ImuBand[];
+  imuMarkers?: ImuMarker[];
+  imuPlotHeight?: number;
+  imuReadouts?: ImuReadout[];
+  imuPose?: ImuPose;
+  imuBoardLabel?: string;
+  imuStatus?: ImuStatus[];
+  imuFormula?: ImuFormula;
+  imuSpectrum?: ImuSpectrum;
+  imuCaption?: string;
+  imuCaptionAtSeconds?: number;
   // OLED screen props (type: "oled_screen"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`, `code`, `codeTitle`,
   // `codeAtSeconds`, `codeRevealSeconds`, `codeFontSize`)
   oledLayers?: OledLayer[];
@@ -1024,6 +1047,21 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
       <LogicWave
         name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline}
         panels={cut.wavePanels} caption={cut.waveCaption} captionAtSeconds={cut.waveCaptionAtSeconds} points={cut.points}
+        textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
+        surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
+      />
+    );
+  }
+
+  if (cut.type === "imu_scope" && cut.name && cut.imuRate) {
+    return maybeWrapWithBg(
+      <ImuScope
+        name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline}
+        rate={cut.imuRate} series={cut.imuSeries} plotTitle={cut.imuPlotTitle} yMin={cut.imuYMin ?? 0} yMax={cut.imuYMax ?? 1}
+        yTicks={cut.imuYTicks} spanSeconds={cut.imuSpanSeconds ?? 10} scroll={cut.imuScroll} lines={cut.imuLines} bands={cut.imuBands}
+        markers={cut.imuMarkers} plotHeight={cut.imuPlotHeight} readouts={cut.imuReadouts} pose={cut.imuPose}
+        boardLabel={cut.imuBoardLabel} status={cut.imuStatus} formula={cut.imuFormula} spectrum={cut.imuSpectrum}
+        caption={cut.imuCaption} captionAtSeconds={cut.imuCaptionAtSeconds} points={cut.points}
         textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
         surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
       />
