@@ -58,6 +58,8 @@ import { TouchPad } from "./components/TouchPad";
 import type { TouchChart, TouchDrop, TouchFinger, TouchGridWindow, TouchGuard, TouchPadDef, TouchWire } from "./components/TouchPad";
 import { FlashMap } from "./components/FlashMap";
 import type { FlashGroup, FlashLegendItem, FlashLink, FlashMeter, FlashPower } from "./components/FlashMap";
+import { PhoneGatt } from "./components/PhoneGatt";
+import type { GattDialog, GattLogLine, GattRow, GattSideItem, GattValue } from "./components/PhoneGatt";
 import { resolveAsset } from "./lib/resolveAsset";
 import type { ParticleType } from "./components/ParticleOverlay";
 import { resolveTheme, type ThemeConfig, DEFAULT_THEME } from "./Root";
@@ -417,6 +419,17 @@ interface Cut {
   flashLegend?: FlashLegendItem[];
   flashCaption?: string;
   flashCaptionAtSeconds?: number;
+  // Phone GATT client props (type: "phone_gatt"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
+  gattScreenTitle?: string;
+  gattStatus?: GattValue[];
+  gattRows?: GattRow[];
+  gattDialog?: GattDialog;
+  gattPhoneCaption?: string;
+  gattSideTitle?: string;
+  gattSide?: GattSideItem[];
+  gattLog?: GattLogLine[];
+  gattLogTitle?: string;
+  gattLogLines?: number;
 }
 
 interface Overlay {
@@ -957,6 +970,19 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline}
         groups={cut.flashGroups} links={cut.flashLinks} power={cut.flashPower} meters={cut.flashMeters} legend={cut.flashLegend}
         caption={cut.flashCaption} captionAtSeconds={cut.flashCaptionAtSeconds} points={cut.points}
+        textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
+        surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
+      />
+    );
+  }
+
+  if (cut.type === "phone_gatt" && cut.name && cut.gattScreenTitle && cut.gattRows) {
+    return maybeWrapWithBg(
+      <PhoneGatt
+        name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline}
+        screenTitle={cut.gattScreenTitle} status={cut.gattStatus} rows={cut.gattRows} dialog={cut.gattDialog}
+        phoneCaption={cut.gattPhoneCaption} sideTitle={cut.gattSideTitle} side={cut.gattSide}
+        log={cut.gattLog} logTitle={cut.gattLogTitle} logLines={cut.gattLogLines} points={cut.points}
         textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
         surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
       />
