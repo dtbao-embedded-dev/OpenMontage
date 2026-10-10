@@ -52,6 +52,8 @@ import { BoardMatrix } from "./components/BoardMatrix";
 import type { MatrixBoard, MatrixRow, MatrixFocus, MatrixVerdict } from "./components/BoardMatrix";
 import { BeamCone } from "./components/BeamCone";
 import type { ConeBeam, ConeObject, ConeMyth, ConeSensor } from "./components/BeamCone";
+import { RfidLock } from "./components/RfidLock";
+import type { RfidCard, RfidPanelsAt, RfidReader, RfidWhitelistEntry } from "./components/RfidLock";
 import { GnssSky } from "./components/GnssSky";
 import type { GnssProgress, GnssReadout, GnssSat, GnssStatus, GnssTimer, GnssWindow } from "./components/GnssSky";
 import { NmeaFields } from "./components/NmeaFields";
@@ -415,6 +417,19 @@ interface Cut {
   coneViewHeight?: number;
   coneCaption?: string;
   coneCaptionAtSeconds?: number;
+  // RFID lock props (type: "rfid_lock"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
+  rfidReader?: RfidReader;
+  rfidCards?: RfidCard[];
+  rfidWhitelist?: RfidWhitelistEntry[];
+  rfidWhitelistTitle?: string;
+  rfidPanelsAt?: RfidPanelsAt;
+  rfidCheckTrack?: [number, "uid" | "aes"][];
+  rfidUnlockSeconds?: number;
+  rfidFieldLabel?: string;
+  rfidFieldAtSeconds?: number;
+  rfidLockLabel?: string;
+  rfidCaption?: string;
+  rfidCaptionAtSeconds?: number;
   // GNSS sky props (type: "gnss_sky"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
   skySats?: GnssSat[];
   skyRoof?: GnssWindow[];
@@ -1087,6 +1102,20 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         beams={cut.coneBeams} sensors={cut.coneSensors} objects={cut.coneObjects} myth={cut.coneMyth}
         rangeMeters={cut.coneRangeMeters} viewHeight={cut.coneViewHeight}
         caption={cut.coneCaption} captionAtSeconds={cut.coneCaptionAtSeconds} points={cut.points}
+        textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
+        surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
+      />
+    );
+  }
+
+  if (cut.type === "rfid_lock" && cut.name && cut.rfidCards) {
+    return maybeWrapWithBg(
+      <RfidLock
+        name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline}
+        reader={cut.rfidReader} cards={cut.rfidCards} whitelist={cut.rfidWhitelist} whitelistTitle={cut.rfidWhitelistTitle}
+        panelsAt={cut.rfidPanelsAt} checkTrack={cut.rfidCheckTrack} unlockSeconds={cut.rfidUnlockSeconds}
+        fieldLabel={cut.rfidFieldLabel} fieldAtSeconds={cut.rfidFieldAtSeconds} lockLabel={cut.rfidLockLabel}
+        caption={cut.rfidCaption} captionAtSeconds={cut.rfidCaptionAtSeconds} points={cut.points}
         textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
         surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
       />
