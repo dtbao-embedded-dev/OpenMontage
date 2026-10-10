@@ -65,6 +65,8 @@ import type { RfidCard, RfidPanelsAt, RfidReader, RfidWhitelistEntry } from "./c
 import { IrRemote } from "./components/IrRemote";
 import type { IrAcState, IrButton, IrLearned, IrShot, IrStrip } from "./components/IrRemote";
 import { CanBus } from "./components/CanBus";
+import { IsrFlow } from "./components/IsrFlow";
+import type { IsrBadge, IsrBox, IsrChannel, IsrCodeTag, IsrCrash, IsrEvent, IsrInfo, IsrIrq, IsrStatus, LaChannel, LaCursor, LaHist } from "./components/IsrFlow";
 import type { CanAck, CanArb, CanField, CanFrameRow, CanGauge, CanInfo, CanNode, CanObdPin, CanPacket, CanPin, CanStatus } from "./components/CanBus";
 import { RtosSync } from "./components/RtosSync";
 import type { RtCode, RtInfo, RtInvPanel, RtLink, RtLogLine, RtNode, RtPacket, RtStack, RtStatus } from "./components/RtosSync";
@@ -476,6 +478,30 @@ interface Cut {
   irIdleStatus?: string;
   irCaption?: string;
   irCaptionAtSeconds?: number;
+  // ISR flow props (type: "isr_flow"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
+  isrView?: "memory" | "handoff" | "analyzer";
+  isrCodeTags?: IsrCodeTag[];
+  isrFlashBusy?: [number, number][];
+  isrFlashBusyLabel?: string;
+  isrIrqs?: IsrIrq[];
+  isrCrash?: IsrCrash;
+  isrPinLabel?: string;
+  isrIsr?: IsrBox;
+  isrTask?: IsrBox;
+  isrChannel?: IsrChannel;
+  isrEvents?: IsrEvent[];
+  isrBadges?: IsrBadge[];
+  isrYield?: { atSeconds: number; label: string };
+  isrLaSpanUs?: number;
+  isrLaTickUs?: number;
+  isrLaChannels?: LaChannel[];
+  isrLaCursors?: LaCursor[];
+  isrLaHist?: LaHist;
+  isrLaTitle?: string;
+  isrInfo?: IsrInfo[];
+  isrStatus?: IsrStatus[];
+  isrCaption?: string;
+  isrCaptionAtSeconds?: number;
   // CAN bus props (type: "can_bus"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
   canView?: "car" | "bus" | "frame" | "obd";
   canFrames?: CanFrameRow[];
@@ -1316,6 +1342,22 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         learned={cut.irLearned} learnedTitle={cut.irLearnedTitle} learnedAtSeconds={cut.irLearnedAtSeconds}
         strips={cut.irStrips} stripBlock={cut.irStripBlock} stripFix={cut.irStripFix} stripsAtSeconds={cut.irStripsAtSeconds}
         idleStatus={cut.irIdleStatus} caption={cut.irCaption} captionAtSeconds={cut.irCaptionAtSeconds} points={cut.points}
+        textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
+        surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
+      />
+    );
+  }
+
+  if (cut.type === "isr_flow" && cut.name) {
+    return maybeWrapWithBg(
+      <IsrFlow
+        name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline} view={cut.isrView}
+        codeTags={cut.isrCodeTags} flashBusy={cut.isrFlashBusy} flashBusyLabel={cut.isrFlashBusyLabel} irqs={cut.isrIrqs}
+        crash={cut.isrCrash} pinLabel={cut.isrPinLabel}
+        isr={cut.isrIsr} task={cut.isrTask} channel={cut.isrChannel} events={cut.isrEvents} badges={cut.isrBadges} yieldAt={cut.isrYield}
+        laSpanUs={cut.isrLaSpanUs} laTickUs={cut.isrLaTickUs} laChannels={cut.isrLaChannels} laCursors={cut.isrLaCursors}
+        laHist={cut.isrLaHist} laTitle={cut.isrLaTitle}
+        info={cut.isrInfo} status={cut.isrStatus} caption={cut.isrCaption} captionAtSeconds={cut.isrCaptionAtSeconds} points={cut.points}
         textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
         surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
       />
