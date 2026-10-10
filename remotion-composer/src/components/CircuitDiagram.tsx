@@ -25,6 +25,8 @@ export interface CircuitPart {
    * opto / ssr: package with top-left `at`, size `w` x `h` (default 300 x 260 / 360 x 260); input pins on the left edge at
    * 0.25h / 0.75h (opto) or 0.3h / 0.7h (ssr), output pins at the same heights on the right edge; lit during `active`.
    * hazard: electrical warning triangle centred on `at`, side `w` (default 200).
+   * battery: single cell from + terminal `from` (long plate, "+" mark) to − terminal `to` (short plate).
+   * inductor: two-terminal coil (four turns) from `from` to `to`; turns accent during `active`.
    */
   kind:
     | "wire"
@@ -55,7 +57,9 @@ export interface CircuitPart {
     | "nmos"
     | "opto"
     | "ssr"
-    | "hazard";
+    | "hazard"
+    | "battery"
+    | "inductor";
   points?: Pt[];
   from?: Pt;
   to?: Pt;
@@ -102,7 +106,7 @@ export interface CircuitPart {
   /** pwm: live readout drawn above the trace's right end: duty in percent, or pulse width in ms (needs `periodMs`). */
   readout?: "percent" | "ms";
   periodMs?: number;
-  /** relay / npn / nmos / opto / ssr / motor / diode: [start, end] seconds when the part is switched on (conducts, spins). */
+  /** relay / npn / nmos / opto / ssr / motor / diode / inductor: [start, end] seconds when the part is switched on (conducts, spins). */
   active?: [number, number][];
   /** relay / npn / nmos / opto / ssr: draw the small terminal names (COM, NO, NC, B, C, E, G, D, S, +, −). Default true. */
   terminalLabels?: boolean;
@@ -490,7 +494,12 @@ export const CircuitDiagram: React.FC<CircuitDiagramProps> = ({
       );
     }
 
-    if ((p.kind === "diode" || p.kind === "lamp" || p.kind === "ac" || p.kind === "motor" || p.kind === "fuse") && p.from && p.to) {
+    if (
+      (p.kind === "diode" || p.kind === "lamp" || p.kind === "ac" || p.kind === "motor" || p.kind === "fuse" || p.kind === "battery" ||
+        p.kind === "inductor") &&
+      p.from &&
+      p.to
+    ) {
       const [x1, y1] = p.from;
       const [x2, y2] = p.to;
       const L = Math.hypot(x2 - x1, y2 - y1);
@@ -515,6 +524,43 @@ export const CircuitDiagram: React.FC<CircuitDiagramProps> = ({
             <polygon points={`${a},${-34} ${a},${34} ${a + tw},0`} fill={accentColor} fillOpacity={0.85 * on} stroke={c} strokeWidth={STROKE} strokeLinejoin="round" />
             <line x1={a + tw} y1={-36} x2={a + tw} y2={36} stroke={c} strokeWidth={STROKE + 1} strokeLinecap="round" />
             {lead(a + tw, L)}
+          </>
+        );
+      } else if (p.kind === "battery") {
+        // Long thin plate = +, short thick plate = −; the "+" stays upright beside the long plate, on the side away from
+        // the default label (right of a vertical cell, above a horizontal one).
+        const gap = 24;
+        const a = (L - gap) / 2;
+        const ux = (x2 - x1) / L;
+        const uy = (y2 - y1) / L;
+        const plus: Pt = [x1 + ux * (a - 34) + uy * 58, y1 + uy * (a - 34) - ux * 58];
+        off = 70;
+        body = (
+          <>
+            {lead(0, a)}
+            <line x1={a} y1={-56} x2={a} y2={56} stroke={ink} strokeWidth={STROKE} strokeLinecap="round" />
+            <line x1={a + gap} y1={-30} x2={a + gap} y2={30} stroke={ink} strokeWidth={STROKE + 5} strokeLinecap="round" />
+            {lead(a + gap, L)}
+          </>
+        );
+        upright = (
+          <text x={plus[0]} y={plus[1] + 12} textAnchor="middle" fontFamily={FONT} fontSize={36} fontWeight={700} fill={ink}>
+            +
+          </text>
+        );
+      } else if (p.kind === "inductor") {
+        // Four half-turn bumps on the -y side; accent while current flows (`active`).
+        const turns = 4;
+        const r = Math.min(28, (L * 0.7) / (2 * turns));
+        const a = (L - 2 * r * turns) / 2;
+        const c = on > 0.5 ? accentColor : ink;
+        const arcs = Array.from({ length: turns }, (_, k) => `A${r},${r} 0 0 1 ${a + 2 * r * (k + 1)},0`).join(" ");
+        off = 56;
+        body = (
+          <>
+            {lead(0, a)}
+            <path d={`M${a},0 ${arcs}`} fill="none" stroke={c} strokeWidth={STROKE} strokeLinecap="round" strokeLinejoin="round" />
+            {lead(a + 2 * r * turns, L)}
           </>
         );
       } else if (p.kind === "fuse") {
