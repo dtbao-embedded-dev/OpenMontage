@@ -80,6 +80,53 @@ def test_unit_words_are_ignored(ns, monkeypatch, tmp_path):
     assert r["match"] == 1.0
 
 
+def test_word_timings_come_from_the_locked_files(ns, monkeypatch, tmp_path):
+    import json
+    import wave
+
+    audio = tmp_path / "assets" / "audio"
+    audio.mkdir(parents=True)
+    (tmp_path / "work").mkdir()
+    with wave.open(str(audio / "narration_s1.wav"), "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(48000)
+        w.writeframes(b"\x00\x00" * 48000 * 2)
+    heard = []
+    monkeypatch.setattr(ns, "transcribe", lambda wav, out_dir: heard.append(wav.name) or {
+        "segments": [{"text": "chạm ngón"}],
+        "word_timestamps": [{"word": "chạm", "start": 0.123, "end": 0.456}, {"word": "ngón", "start": 0.456, "end": 0.9}]})
+    out = ns.write_timings([{"id": "s1", "adopted": "try2"}], tmp_path)
+    assert heard == ["narration_s1.wav"]
+    assert json.loads(out.read_text(encoding="utf-8")) == {
+        "s1": {"duration": 2.0, "words": [{"word": "chạm", "start": 0.12, "end": 0.46},
+                                           {"word": "ngón", "start": 0.46, "end": 0.9}]}}
+    assert not (tmp_path / "work" / "word_timings_whisper.json").exists()
+
+
+def test_whisper_timings_are_kept_aside_once(ns, monkeypatch, tmp_path):
+    import wave
+
+    audio = tmp_path / "assets" / "audio"
+    audio.mkdir(parents=True)
+    work = tmp_path / "work"
+    work.mkdir()
+    with wave.open(str(audio / "narration_s1.wav"), "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(48000)
+        w.writeframes(b"\x00\x00" * 4800)
+    monkeypatch.setattr(ns, "transcribe", lambda wav, out_dir: {"segments": [], "word_timestamps": []})
+    (work / "word_timings.json").write_text('{"s1": "from align.py"}', encoding="utf-8")
+    ns.write_timings([{"id": "s1"}], tmp_path)
+    assert (work / "word_timings_whisper.json").read_text(encoding="utf-8") == '{"s1": "from align.py"}'
+    # A report from this script marks the file as its own: the next run does not back it up again.
+    (work / "word_timings_whisper.json").unlink()
+    (work / "narration_report.json").write_text('{"timings": "work/word_timings.json"}', encoding="utf-8")
+    ns.write_timings([{"id": "s1"}], tmp_path)
+    assert not (work / "word_timings_whisper.json").exists()
+
+
 def test_listen_checks_media_against_the_whole_script(ns, monkeypatch, tmp_path):
     base = tmp_path / "projects" / "demo"
     (base / "artifacts").mkdir(parents=True)
