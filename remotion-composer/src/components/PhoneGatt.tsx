@@ -97,10 +97,10 @@ interface PhoneGattProps {
 
 const FONT = "Inter, 'Segoe UI', system-ui, sans-serif";
 const MONO = "'JetBrains Mono', 'Cascadia Code', Consolas, monospace";
-const PHONE_W = 512;
+const PHONE_W = 540;
 /** Phone width when there is no ESP32 side column. */
 const PHONE_W_ALONE = 680;
-const SIDE_W = 288;
+const SIDE_W = 260;
 
 /** Latest value at or before time t (seconds), with the time it was set. */
 function latest(values: GattValue[] | undefined, t: number): GattValue | undefined {
@@ -222,11 +222,11 @@ export const PhoneGatt: React.FC<PhoneGattProps> = ({
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: titleSize, fontWeight: 700, color: textColor, letterSpacing: "-0.01em", lineHeight: 1.2 }}>{r.name}</div>
           {r.uuid && (
-            <div style={{ fontSize: 24, fontFamily: MONO, color: mutedColor, marginTop: 4, wordBreak: "break-all" }}>
+            <div style={{ fontSize: 22, fontFamily: MONO, color: mutedColor, marginTop: 4, wordBreak: "break-all" }}>
               UUID: {r.uuid}
             </div>
           )}
-          {r.sub && <div style={{ fontSize: 24, color: mutedColor, marginTop: 2, letterSpacing: "0.01em" }}>{r.sub}</div>}
+          {r.sub && <div style={{ fontSize: 22, color: mutedColor, marginTop: 2, letterSpacing: "0.01em" }}>{r.sub}</div>}
           {v && (
             <div
               style={{
@@ -234,7 +234,7 @@ export const PhoneGatt: React.FC<PhoneGattProps> = ({
                 marginTop: 6,
                 padding: "2px 10px",
                 borderRadius: 10,
-                fontSize: 27,
+                fontSize: 25,
                 fontFamily: MONO,
                 color: textColor,
                 background: `rgba(255,204,0,${0.55 * flash})`,
