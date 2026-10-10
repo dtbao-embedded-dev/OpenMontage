@@ -66,6 +66,8 @@ import { IrRemote } from "./components/IrRemote";
 import type { IrAcState, IrButton, IrLearned, IrShot, IrStrip } from "./components/IrRemote";
 import { CanBus } from "./components/CanBus";
 import type { CanAck, CanArb, CanField, CanFrameRow, CanGauge, CanInfo, CanNode, CanObdPin, CanPacket, CanPin, CanStatus } from "./components/CanBus";
+import { RtosSync } from "./components/RtosSync";
+import type { RtCode, RtInfo, RtInvPanel, RtLink, RtLogLine, RtNode, RtPacket, RtStack, RtStatus } from "./components/RtosSync";
 import { AirRoom } from "./components/AirRoom";
 import type { AirClock, AirItem, AirParticles, AirReadout, AirWindowState } from "./components/AirRoom";
 import { GnssSky } from "./components/GnssSky";
@@ -493,6 +495,20 @@ interface Cut {
   canStatus?: CanStatus[];
   canCaption?: string;
   canCaptionAtSeconds?: number;
+  // FreeRTOS sync props (type: "rtos_sync"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
+  rtView?: "diagram" | "inversion" | "stack";
+  rtCanvasHeight?: number;
+  rtNodes?: RtNode[];
+  rtLinks?: RtLink[];
+  rtPackets?: RtPacket[];
+  rtInversion?: RtInvPanel[];
+  rtStack?: RtStack;
+  rtLog?: { title?: string; lines: RtLogLine[]; atSeconds?: number; fontSize?: number };
+  rtCode?: RtCode;
+  rtInfo?: RtInfo[];
+  rtStatus?: RtStatus[];
+  rtCaption?: string;
+  rtCaptionAtSeconds?: number;
   // Air room props (type: "air_room"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
   airParticles?: AirParticles[];
   airItems?: AirItem[];
@@ -1315,6 +1331,19 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         fields={cut.canFields} arb={cut.canArb} ack={cut.canAck}
         obdPins={cut.canObdPins} obdPhoto={cut.canObdPhoto} info={cut.canInfo} status={cut.canStatus}
         caption={cut.canCaption} captionAtSeconds={cut.canCaptionAtSeconds} points={cut.points}
+        textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
+        surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
+      />
+    );
+  }
+
+  if (cut.type === "rtos_sync" && cut.name) {
+    return maybeWrapWithBg(
+      <RtosSync
+        name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline} view={cut.rtView} canvasHeight={cut.rtCanvasHeight}
+        nodes={cut.rtNodes} links={cut.rtLinks} packets={cut.rtPackets} inversion={cut.rtInversion} stack={cut.rtStack}
+        log={cut.rtLog} code={cut.rtCode} info={cut.rtInfo} status={cut.rtStatus}
+        caption={cut.rtCaption} captionAtSeconds={cut.rtCaptionAtSeconds} points={cut.points}
         textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
         surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
       />
