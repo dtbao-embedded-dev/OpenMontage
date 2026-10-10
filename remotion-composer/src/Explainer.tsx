@@ -66,6 +66,8 @@ import { BrowserPage } from "./components/BrowserPage";
 import type { BrowserCard, BrowserFrameLine, BrowserLedState, BrowserValue, BrowserWindow } from "./components/BrowserPage";
 import { PhoneProv } from "./components/PhoneProv";
 import type { ProvLogLine, ProvScreen, ProvSideItem } from "./components/PhoneProv";
+import { PhoneRmaker } from "./components/PhoneRmaker";
+import type { RmakerLogLine, RmakerPowerStep, RmakerRoute, RmakerScreen } from "./components/PhoneRmaker";
 import { TlsCert } from "./components/TlsCert";
 import type { CertCard, CertClock, CertLog, CertVerdict } from "./components/TlsCert";
 import { resolveAsset } from "./lib/resolveAsset";
@@ -470,6 +472,17 @@ interface Cut {
   provLog?: ProvLogLine[];
   provLogTitle?: string;
   provLogLines?: number;
+  // RainMaker app props (type: "phone_rmaker"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
+  rmakerScreens?: RmakerScreen[];
+  rmakerPhoneCaption?: string;
+  rmakerRoutes?: RmakerRoute[];
+  rmakerBoardTitle?: string;
+  rmakerBoardLabel?: string;
+  rmakerBoardPower?: RmakerPowerStep[];
+  rmakerBoardPresses?: number[];
+  rmakerLog?: RmakerLogLine[];
+  rmakerLogTitle?: string;
+  rmakerLogLines?: number;
   // TLS certificate props (type: "tls_cert"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
   certCards?: CertCard[];
   certClock?: CertClock;
@@ -1040,6 +1053,19 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline} screens={cut.provScreens}
         phoneCaption={cut.provPhoneCaption} sideTitle={cut.provSideTitle} side={cut.provSide}
         log={cut.provLog} logTitle={cut.provLogTitle} logLines={cut.provLogLines} points={cut.points}
+        textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
+        surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
+      />
+    );
+  }
+
+  if (cut.type === "phone_rmaker" && cut.name && cut.rmakerScreens) {
+    return maybeWrapWithBg(
+      <PhoneRmaker
+        name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline} screens={cut.rmakerScreens}
+        phoneCaption={cut.rmakerPhoneCaption} routes={cut.rmakerRoutes} boardTitle={cut.rmakerBoardTitle}
+        boardLabel={cut.rmakerBoardLabel} boardPower={cut.rmakerBoardPower} boardPresses={cut.rmakerBoardPresses}
+        log={cut.rmakerLog} logTitle={cut.rmakerLogTitle} logLines={cut.rmakerLogLines} points={cut.points}
         textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
         surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
       />
