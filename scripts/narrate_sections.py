@@ -18,7 +18,10 @@ consistent as the sections of one take. Once every section passes:
   3. the adopted sections are joined into work/narration_full.wav, and the whole
      file is transcribed in one pass and checked against the full script with
      the same --min-score;
-  4. every word the adopted sections missed is listed once more, to listen for.
+  4. every word the adopted sections missed is listed once more, to listen for;
+  5. the locked narration_<id>.wav files are transcribed once more for their word
+     timestamps: work/word_timings.json, {id: {"duration", "words": [{"word",
+     "start", "end"}]}}, the timing source of every on-screen change.
 
 Build the scene plan and the video only after this exits 0. After the render,
 --listen <video> checks the render's audio against the full script the same way
@@ -246,6 +249,32 @@ def join(sections: list[dict], base: Path, gap: float) -> Path:
     return full
 
 
+def write_timings(sections: list[dict], base: Path) -> Path:
+    """Word timestamps of the locked narration files, the timing source for the scene plan.
+
+    Word starts land a median ~50 ms after the speech onset (|error| median 90 ms, p90 120 ms
+    over 235 onsets of four videos); a narration rerun rewrites the file, so re-check anchors.
+    """
+    timings = {}
+    for s in sections:
+        wav = base / "assets" / "audio" / f"narration_{s['id']}.wav"
+        with wave.open(str(wav), "rb") as w:
+            duration = w.getnframes() / w.getframerate()
+        t = transcribe(wav, base / "work" / "transcripts_asr")
+        timings[s["id"]] = {"duration": round(duration, 2),
+                            "words": [{"word": x["word"], "start": round(x["start"], 2), "end": round(x["end"], 2)}
+                                      for x in t.get("word_timestamps") or []]}
+    out = base / "work" / "word_timings.json"
+    prev = base / "work" / "narration_report.json"
+    if out.exists() and not (prev.exists() and "timings" in json.loads(prev.read_text(encoding="utf-8"))):
+        # Written by a per-project whisper-small align.py: its anchors were spelled for that file.
+        shutil.copy2(out, out.with_name("word_timings_whisper.json"))
+        print("WARNING: replaced a whisper word_timings.json (kept as word_timings_whisper.json); "
+              "re-check every anchor against the new spellings")
+    out.write_text(json.dumps(timings, ensure_ascii=False, indent=1), encoding="utf-8")
+    return out
+
+
 def listen(media: Path, script: dict, base: Path, ignore: set[str], min_score: float) -> int:
     """Final listen-back: check a render's audio (music and all) against the full script."""
     if not media.exists():
@@ -315,6 +344,8 @@ def main() -> int:
             for s in sections:
                 for m in s["to_listen"]:
                     print(f"   {s['id']} {s['adopted']}: '{m['expected']}' heard '{m['heard']}'  ({m['context']})")
+            report["timings"] = write_timings(sections, base).relative_to(base).as_posix()
+            print(f"word timings -> {report['timings']} (anchors use these spellings; re-check them after a rerun)")
         (base / "work" / "narration_report.json").write_text(
             json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     except (SetupError, OSError, KeyError, json.JSONDecodeError, subprocess.CalledProcessError) as e:
