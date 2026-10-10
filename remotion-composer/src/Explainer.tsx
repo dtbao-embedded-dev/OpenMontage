@@ -57,6 +57,8 @@ import type { CellBench, CellBridge, CellChart, CellReadout, CellStep, CellWirin
 import { LogicWave } from "./components/LogicWave";
 import { ImuScope } from "./components/ImuScope";
 import type { ImuBand, ImuFormula, ImuLine, ImuMarker, ImuPose, ImuReadout, ImuSeries, ImuSpectrum, ImuStatus } from "./components/ImuScope";
+import { PowerMeter } from "./components/PowerMeter";
+import type { PmBattery, PmFormula, PmPanel, PmReadout, PmStatus } from "./components/PowerMeter";
 import type { WavePanel } from "./components/LogicWave";
 import { OledScreen } from "./components/OledScreen";
 import type { OledByte, OledCodeHighlight, OledKnob, OledLayer, OledMark, OledPages } from "./components/OledScreen";
@@ -436,6 +438,17 @@ interface Cut {
   imuSpectrum?: ImuSpectrum;
   imuCaption?: string;
   imuCaptionAtSeconds?: number;
+  // Power meter props (type: "power_meter"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
+  pmRate?: number;
+  pmSpanSeconds?: number;
+  pmPanels?: PmPanel[];
+  pmReadouts?: PmReadout[];
+  pmReadoutColumns?: number;
+  pmBatteries?: PmBattery[];
+  pmFormula?: PmFormula;
+  pmStatus?: PmStatus[];
+  pmCaption?: string;
+  pmCaptionAtSeconds?: number;
   // OLED screen props (type: "oled_screen"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`, `code`, `codeTitle`,
   // `codeAtSeconds`, `codeRevealSeconds`, `codeFontSize`)
   oledLayers?: OledLayer[];
@@ -1087,6 +1100,19 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         markers={cut.imuMarkers} plotHeight={cut.imuPlotHeight} readouts={cut.imuReadouts} pose={cut.imuPose}
         boardLabel={cut.imuBoardLabel} status={cut.imuStatus} formula={cut.imuFormula} spectrum={cut.imuSpectrum}
         caption={cut.imuCaption} captionAtSeconds={cut.imuCaptionAtSeconds} points={cut.points}
+        textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
+        surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
+      />
+    );
+  }
+
+  if (cut.type === "power_meter" && cut.name && cut.pmRate) {
+    return maybeWrapWithBg(
+      <PowerMeter
+        name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline}
+        rate={cut.pmRate} spanSeconds={cut.pmSpanSeconds ?? 10} panels={cut.pmPanels} readouts={cut.pmReadouts}
+        readoutColumns={cut.pmReadoutColumns} batteries={cut.pmBatteries} formula={cut.pmFormula} status={cut.pmStatus}
+        caption={cut.pmCaption} captionAtSeconds={cut.pmCaptionAtSeconds} points={cut.points}
         textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
         surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
       />
