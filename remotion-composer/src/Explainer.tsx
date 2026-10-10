@@ -54,6 +54,8 @@ import { BeamCone } from "./components/BeamCone";
 import type { ConeBeam, ConeObject, ConeMyth, ConeSensor } from "./components/BeamCone";
 import { StepperDrive } from "./components/StepperDrive";
 import type { StepperMotor } from "./components/StepperDrive";
+import { MotorDrive } from "./components/MotorDrive";
+import type { MotorReadout, MotorState, MotorStatus, MotorTag, MotorMode } from "./components/MotorDrive";
 import { RfidLock } from "./components/RfidLock";
 import type { RfidCard, RfidPanelsAt, RfidReader, RfidWhitelistEntry } from "./components/RfidLock";
 import { IrRemote } from "./components/IrRemote";
@@ -469,6 +471,23 @@ interface Cut {
   airViewHeight?: number;
   airCaption?: string;
   airCaptionAtSeconds?: number;
+  // Motor drive props (type: "motor_drive"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
+  mdView?: "motor" | "bridge" | "both";
+  mdRpmTrack?: [number, number][];
+  mdDutyTrack?: [number, number][];
+  mdStates?: MotorState[];
+  mdLoads?: [number, number][];
+  mdLoadLabel?: string;
+  mdBridgeAtSeconds?: number;
+  mdPinLabels?: [string, string];
+  mdPinsAtSeconds?: number;
+  mdTableAtSeconds?: number;
+  mdModeLabels?: Partial<Record<MotorMode, string>>;
+  mdTags?: MotorTag[];
+  mdReadouts?: MotorReadout[];
+  mdStatus?: MotorStatus[];
+  mdCaption?: string;
+  mdCaptionAtSeconds?: number;
   // GNSS sky props (type: "gnss_sky"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
   skySats?: GnssSat[];
   skyRoof?: GnssWindow[];
@@ -1141,6 +1160,21 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         beams={cut.coneBeams} sensors={cut.coneSensors} objects={cut.coneObjects} myth={cut.coneMyth}
         rangeMeters={cut.coneRangeMeters} viewHeight={cut.coneViewHeight}
         caption={cut.coneCaption} captionAtSeconds={cut.coneCaptionAtSeconds} points={cut.points}
+        textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
+        surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
+      />
+    );
+  }
+
+  if (cut.type === "motor_drive" && cut.name) {
+    return maybeWrapWithBg(
+      <MotorDrive
+        name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline}
+        view={cut.mdView} rpmTrack={cut.mdRpmTrack} dutyTrack={cut.mdDutyTrack} states={cut.mdStates}
+        loads={cut.mdLoads} loadLabel={cut.mdLoadLabel} bridgeAtSeconds={cut.mdBridgeAtSeconds} pinLabels={cut.mdPinLabels}
+        pinsAtSeconds={cut.mdPinsAtSeconds} tableAtSeconds={cut.mdTableAtSeconds} modeLabels={cut.mdModeLabels}
+        tags={cut.mdTags} readouts={cut.mdReadouts} status={cut.mdStatus}
+        caption={cut.mdCaption} captionAtSeconds={cut.mdCaptionAtSeconds} points={cut.points}
         textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
         surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
       />
