@@ -52,6 +52,8 @@ import { BoardMatrix } from "./components/BoardMatrix";
 import type { MatrixBoard, MatrixRow, MatrixFocus, MatrixVerdict } from "./components/BoardMatrix";
 import { BeamCone } from "./components/BeamCone";
 import type { ConeBeam, ConeObject, ConeMyth, ConeSensor } from "./components/BeamCone";
+import { LoraLink } from "./components/LoraLink";
+import type { LoraBands, LoraChirps, LoraProfile } from "./components/LoraLink";
 import { StepperDrive } from "./components/StepperDrive";
 import type { StepperMotor } from "./components/StepperDrive";
 import { MotorDrive } from "./components/MotorDrive";
@@ -427,6 +429,12 @@ interface Cut {
   coneCaptionAtSeconds?: number;
   // Stepper drive props (type: "stepper_drive"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
   stepperMotors?: StepperMotor[];
+  // LoRa link props (type: "lora_link"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
+  loraChirps?: LoraChirps;
+  loraBands?: LoraBands;
+  loraProfile?: LoraProfile;
+  loraCaption?: string;
+  loraCaptionAtSeconds?: number;
   stepperHidePlot?: boolean;
   stepperCaption?: string;
   stepperCaptionAtSeconds?: number;
@@ -1147,6 +1155,18 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline}
         boards={cut.matrixBoards} rows={cut.matrixRows} focus={cut.matrixFocus} verdicts={cut.matrixVerdicts}
         imageHeight={cut.matrixImageHeight} source={cut.matrixSource} sourceAtSeconds={cut.matrixSourceAtSeconds} points={cut.points}
+        textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
+        surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
+      />
+    );
+  }
+
+  if (cut.type === "lora_link" && cut.name) {
+    return maybeWrapWithBg(
+      <LoraLink
+        name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline}
+        chirps={cut.loraChirps} bands={cut.loraBands} profile={cut.loraProfile}
+        caption={cut.loraCaption} captionAtSeconds={cut.loraCaptionAtSeconds} points={cut.points}
         textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
         surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
       />
