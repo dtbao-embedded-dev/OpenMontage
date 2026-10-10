@@ -42,7 +42,9 @@ export interface ImuMarker {
 export interface ImuReadout {
   label: string;
   /** Index into `series`; the readout shows that series' value at the current time. */
-  series: number;
+  series?: number;
+  /** Own samples at `rate` (for a value that is not plotted, e.g. the tilt angle); wins over `series`. */
+  values?: number[];
   unit?: string;
   decimals?: number;
   tone?: Tone;
@@ -243,12 +245,36 @@ export const ImuScope: React.FC<ImuScopeProps> = ({
           </div>
         )}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 14 }}>
+          {status.length > 0 && (
+            <div style={{ height: 60, display: "flex", alignItems: "center" }}>
+              {st && (
+                <div
+                  style={{
+                    padding: "10px 24px",
+                    borderRadius: 40,
+                    background: toneColor(st.tone, accentColor),
+                    color: "#FFFFFF",
+                    fontSize: 32,
+                    fontWeight: 700,
+                    whiteSpace: "nowrap",
+                    opacity: Math.min(1, stPop),
+                    transform: `scale(${interpolate(stPop, [0, 1], [0.6, 1])})`,
+                    transformOrigin: "left center",
+                    boxShadow: "0 10px 24px rgba(16,24,40,0.18)",
+                  }}
+                >
+                  {st.text}
+                </div>
+              )}
+            </div>
+          )}
           {readouts.map((ro, i) => {
             const o = pop(sec(ro.atSeconds));
-            const s = series[ro.series];
-            if (!s) return null;
-            const v = sample(s.values, rate, Math.max(t, s.atSeconds ?? 0));
-            const c = ro.color ?? s.color ?? toneColor(ro.tone ?? s.tone, textColor);
+            const s = ro.series !== undefined ? series[ro.series] : undefined;
+            const vals = ro.values ?? s?.values;
+            if (!vals) return null;
+            const v = sample(vals, rate, Math.max(t, s?.atSeconds ?? 0));
+            const c = ro.color ?? s?.color ?? toneColor(ro.tone ?? s?.tone, textColor);
             const txt = v.toFixed(ro.decimals ?? 1).replace(".", ",").replace(/^-/, "−");
             return (
               <div key={i} style={{ opacity: o, display: "flex", flexDirection: "column" }}>
@@ -264,26 +290,6 @@ export const ImuScope: React.FC<ImuScopeProps> = ({
             );
           })}
         </div>
-        {st && (
-          <div
-            style={{
-              position: "absolute",
-              right: 24,
-              top: 22,
-              padding: "12px 26px",
-              borderRadius: 40,
-              background: toneColor(st.tone, accentColor),
-              color: "#FFFFFF",
-              fontSize: 36,
-              fontWeight: 700,
-              opacity: Math.min(1, stPop),
-              transform: `scale(${interpolate(stPop, [0, 1], [0.6, 1])})`,
-              boxShadow: "0 10px 24px rgba(16,24,40,0.18)",
-            }}
-          >
-            {st.text}
-          </div>
-        )}
       </div>
     );
   };
