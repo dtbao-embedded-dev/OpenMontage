@@ -138,31 +138,34 @@ point of the default background.
 - **Narration verify — audio first, then video.** Run
   `python scripts/narrate_sections.py <slug>` (reads `artifacts/script.json` and the lower-case
   `work/tts_text.json`). It runs the steps in this order:
-  1. Request the server one section at a time and transcribe each attempt with faster-whisper
-     **`large-v3`** (`language: "vi"`), aligned word by word with the script. An attempt passes
-     when at least **85 %** of the checked script words are heard (`--min-score`, user decision
-     2026-10-10); the words it missed are printed again at the end as the list to listen for,
-     and the user decides on them while listening to the full narration. A section below 85 %
-     is regenerated on its own, up to 4 attempts (`assets/audio/takes/<id>/try<k>.wav`).
-     A word missed by every attempt is a habit of the voice, not bad luck: the script lists it
-     as `missed_every_time` instead of retrying forever. A word whisper always writes
-     differently (a unit such as "giây") goes in `--ignore`; a rerun rescores the attempts on
-     disk without regenerating them. `--redo <id>` starts a section over.
+  1. Request the server one section at a time and transcribe each attempt with tool
+     `zipformer_vi_asr` (Zipformer-30M-RNNT-6000h via sherpa-onnx, CPU, ~0.2 s a section; user
+     decision 2026-10-10, replacing whisper large-v3), aligned word by word with the script. The
+     check is relative — it sorts attempts and lists what to listen for; the user's own listen
+     decides. An attempt passes when at least **85 %** of the checked script words are heard
+     (`--min-score`, user decision 2026-10-10); the words it missed are printed again at the end
+     as the list to listen for. A section below 85 % is regenerated on its own, up to 4 attempts
+     (`assets/audio/takes/<id>/try<k>.wav`). A word missed by every attempt is a habit of the
+     voice, not bad luck: the script lists it as `missed_every_time` instead of retrying forever.
+     A word the recogniser always writes differently goes in `--ignore`; a rerun rescores the
+     attempts on disk without regenerating them. `--redo <id>` starts a section over.
   2. When every section passes, lock them: gain-match to their median loudness, flag a speech
-     rate more than 15 % off the median, join them into `work/narration_full.wav` and run a
-     large-v3 listen-back on the whole narration. Build the scene plan and the video only after
-     the script exits 0, and only from these files, so the visuals stay in sync with the voice.
-  3. The automatic check covers words with Vietnamese diacritics only. Initials that sound alike
-     in the Northern voice (ch/tr, d/gi/r, s/x) count as a match, so "trục" for "chục" or "dây"
-     for "giây" needs no `--ignore`; an ignored word also drops its sound-alikes. Read the HEARD
-     text it prints for every section for the English terms whose meaning changes when misread
-     (e.g. "board" heard as "bot"/"both").
-  4. After the video render, run a final large-v3 listen-back on the audio of the full render.
-     It catches mix and cut problems. It does not replace steps 1–2.
+     rate more than 15 % off the median, join them into `work/narration_full.wav` and check the
+     whole narration in one pass. Build the scene plan and the video only after the script exits
+     0, and only from these files, so the visuals stay in sync with the voice.
+  3. The automatic check covers words with Vietnamese diacritics only, number words included
+     (the recogniser writes them as words). Unit words (vôn, héc, mê, lô, ôm, oát, mét, xăng)
+     are ignored by default: it writes them as ASCII ("vun", "vol") or drops them. Initials that
+     sound alike in the Northern voice (ch/tr, d/gi/r, s/x) count as a match; an ignored word also
+     drops its sound-alikes. Words without diacritics ("dung", "cho") are not checked, and English
+     terms come out as Vietnamese syllables ("i sp ba hai" for ESP32): read the HEARD text it
+     prints for every section, and listen.
+  4. After the video render, run
+     `python scripts/narrate_sections.py <slug> --listen <render.mp4>` (music and all, ~7 s;
+     `work/listen_report.json`). It catches mix and cut problems. It does not replace steps 1–2.
 
-  small and medium mishear both ways, so they are not a pronunciation check (small stays the
-  timing source, see Sync). large-v3 invents phrases such as "Cảm ơn các bạn đã theo dõi" on a
-  music-only tail; ignore text past the last narration section.
+  Model license: CC BY-NC-ND 4.0 (non-commercial). Files are in the Hugging Face cache after the
+  first run; `pip install sherpa-onnx` in the repo `.venv`.
 - **Letter case of TTS text:** the server's text front end spells an upper-case word it does not
   know with Vietnamese letter names (voice-tts README, "Some words are respelled"). So every text
   sent to the voice server is **all lower case** — sentence starts, names and English terms
@@ -173,7 +176,7 @@ point of the default background.
   "có thắc mắc gì về ESP, nhắn tin trực tiếp cho mình nhé, mình trả lời từng người."
 - **Terms the voice garbles:** fixed on the voice-tts server, not in OpenMontage. Keep the term in
   the script and do not rephrase or respell it here. If a term still comes out wrong, stop and
-  report it with the take, the time and what large-v3 heard. Known so far (all with `normal`; `special`
+  report it with the take, the time and what the check heard. Known so far (all with `normal`; `special`
   fixes board → "bo", AP → "ây pi", POST): "board" → "bot", "ESP-NOW" → "ESP-NOV kép" (W spelled as "vê kép"),
   "HTTP POST" → "HTTP phốt", "AP" → "áp".
 - **Closing line:** the last spoken sentence of every video is, verbatim:
