@@ -29,6 +29,7 @@ export { PhoneGatt } from "./PhoneGatt";
 export { WledApp } from "./WledApp";
 export { BrowserPage } from "./BrowserPage";
 export { PhoneProv } from "./PhoneProv";
+export { PhoneRmaker } from "./PhoneRmaker";
 export { TlsCert } from "./TlsCert";
 export type { ParticleType } from "./ParticleOverlay";
 export type { CameraMotion, AnimeSceneProps } from "./AnimeScene";
@@ -48,4 +49,5 @@ export type { BrowserCard, BrowserFrameLine, BrowserLedState, BrowserValue, Brow
 export type { GattAction, GattDialog, GattLogLine, GattRow, GattSideItem, GattTap, GattValue } from "./PhoneGatt";
 export type { WledAudio, WledNetwork, WledPacket, WledRow, WledScreen, WledSegment, WledStep, WledStrip } from "./WledApp";
 export type { ProvLogLine, ProvNetwork, ProvScreen, ProvSideItem, ProvStep } from "./PhoneProv";
+export type { RmakerDevice, RmakerLogLine, RmakerPowerStep, RmakerRoute, RmakerSchedule, RmakerScreen } from "./PhoneRmaker";
 export type { CertCard, CertClock, CertClockPoint, CertLog, CertLogLine, CertRow, CertTone, CertVerdict } from "./TlsCert";
