@@ -39,6 +39,7 @@ export { TlsCert } from "./TlsCert";
 export { Roadmap } from "./Roadmap";
 export { BeamCone } from "./BeamCone";
 export { AirRoom } from "./AirRoom";
+export { StepperDrive } from "./StepperDrive";
 export { RfidLock } from "./RfidLock";
 export { IrRemote } from "./IrRemote";
 export { LoadCell } from "./LoadCell";
@@ -67,6 +68,7 @@ export type { CertCard, CertClock, CertClockPoint, CertLog, CertLogLine, CertRow
 export type { RoadmapFocus, RoadmapItem, RoadmapStage } from "./Roadmap";
 export type { ConeBeam, ConeMyth, ConeObject, ConeSensor } from "./BeamCone";
 export type { AirClock, AirItem, AirLevel, AirParticles, AirReadout, AirWindowState } from "./AirRoom";
+export type { StepChopper, StepMode, StepperBadge, StepperMotor } from "./StepperDrive";
 export type { RfidCard, RfidPanelsAt, RfidReader, RfidWhitelistEntry } from "./RfidLock";
 export type { IrAcState, IrButton, IrLearned, IrShot, IrStrip } from "./IrRemote";
 export type { CellBench, CellBridge, CellChart, CellReadout, CellStep, CellWiring, CellWeight, CellPin, CellColumn, CellWire, CellSeries, CellTone } from "./LoadCell";
