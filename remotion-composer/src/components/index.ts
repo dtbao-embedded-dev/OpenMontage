@@ -27,6 +27,7 @@ export { TouchPad } from "./TouchPad";
 export { FlashMap } from "./FlashMap";
 export { PhoneGatt } from "./PhoneGatt";
 export { BrowserPage } from "./BrowserPage";
+export { PhoneProv } from "./PhoneProv";
 export type { ParticleType } from "./ParticleOverlay";
 export type { CameraMotion, AnimeSceneProps } from "./AnimeScene";
 export type { TerminalStep } from "./TerminalScene";
@@ -43,3 +44,4 @@ export type { TouchPadDef, TouchFinger, TouchDrop, TouchGridWindow, TouchGuard, 
 export type { FlashCell, FlashGroup, FlashLegendItem, FlashLink, FlashMeter, FlashPower, FlashState, FlashStep } from "./FlashMap";
 export type { BrowserCard, BrowserFrameLine, BrowserLedState, BrowserValue, BrowserWindow } from "./BrowserPage";
 export type { GattAction, GattDialog, GattLogLine, GattRow, GattSideItem, GattTap, GattValue } from "./PhoneGatt";
+export type { ProvLogLine, ProvNetwork, ProvScreen, ProvSideItem, ProvStep } from "./PhoneProv";
