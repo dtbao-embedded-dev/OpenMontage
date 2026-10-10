@@ -57,9 +57,15 @@ A brief that explicitly asks for something different overrides a rule; say so wh
 
 ### Intro card
 
-- Every video opens on the brand intro card
-  `E:\Baotd\media\brand\tiktok-intro-esp32-chia-se-kien-thuc-1080x1920.png`
-  ("Lập trình nhúng · IoT / ESP32 / Chia sẻ kiến thức" above an ESP32-S3 board).
+- Every video opens on the brand intro card of its series (see Release), so the two series
+  have different TikTok covers (user decision 2026-10-10):
+  - Learning series (`Learining-ESP32`):
+    `E:\Baotd\media\brand\tiktok-intro-esp32-chia-se-kien-thuc-1080x1920.png`
+    ("Lập trình nhúng · IoT / ESP32 / Chia sẻ kiến thức" above an ESP32-S3 board).
+  - News (`News-ESP32`): `E:\Baotd\media\brand\tiktok-intro-esp32-tin-tuc-1080x1920.png`
+    (blue "TIN TỨC" badge / ESP32 / "Tin mới · Dự án hay", same board and layout).
+
+  Each PNG has an `.html` source next to it with the re-render command.
 - 1.5 s, music only; the narration starts after it (shift the first section by the intro length).
   It doubles as the TikTok cover frame, so it must be at full opacity on frame 0.
 - Copy it into `projects/<project>/assets/images/` (and the render `public_dir`), then add it as
