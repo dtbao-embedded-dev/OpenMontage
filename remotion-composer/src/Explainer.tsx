@@ -52,6 +52,8 @@ import { BoardMatrix } from "./components/BoardMatrix";
 import type { MatrixBoard, MatrixRow, MatrixFocus, MatrixVerdict } from "./components/BoardMatrix";
 import { CircuitDiagram } from "./components/CircuitDiagram";
 import type { CircuitPart } from "./components/CircuitDiagram";
+import { LoadCell } from "./components/LoadCell";
+import type { CellBench, CellBridge, CellChart, CellReadout, CellStep, CellWiring } from "./components/LoadCell";
 import { LogicWave } from "./components/LogicWave";
 import { ImuScope } from "./components/ImuScope";
 import type { ImuBand, ImuFormula, ImuLine, ImuMarker, ImuPose, ImuReadout, ImuSeries, ImuSpectrum, ImuStatus } from "./components/ImuScope";
@@ -399,6 +401,16 @@ interface Cut {
   // Circuit diagram props (type: "circuit_diagram"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
   circuitParts?: CircuitPart[];
   circuitViewHeight?: number;
+  // Load cell props (type: "load_cell"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
+  cellBench?: CellBench;
+  cellBridge?: CellBridge;
+  cellReadouts?: CellReadout[];
+  cellSteps?: CellStep[];
+  cellStepsTitle?: string;
+  cellWiring?: CellWiring;
+  cellChart?: CellChart;
+  cellCaption?: string;
+  cellCaptionAtSeconds?: number;
   // Logic wave props (type: "logic_wave"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
   wavePanels?: WavePanel[];
   waveCaption?: string;
@@ -1025,6 +1037,19 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline}
         rows={cut.metricRows} scale={cut.metricScale} baseline={cut.metricBaseline} maxValue={cut.metricMax}
         source={cut.metricSource} sourceAtSeconds={cut.metricSourceAtSeconds} points={cut.points}
+        textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
+        surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
+      />
+    );
+  }
+
+  if (cut.type === "load_cell" && cut.name) {
+    return maybeWrapWithBg(
+      <LoadCell
+        name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline}
+        bench={cut.cellBench} bridge={cut.cellBridge} readouts={cut.cellReadouts} steps={cut.cellSteps}
+        stepsTitle={cut.cellStepsTitle} wiring={cut.cellWiring} chart={cut.cellChart}
+        caption={cut.cellCaption} captionAtSeconds={cut.cellCaptionAtSeconds} points={cut.points}
         textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
         surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
       />
