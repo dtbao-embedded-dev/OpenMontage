@@ -54,6 +54,8 @@ import { BeamCone } from "./components/BeamCone";
 import type { ConeBeam, ConeObject, ConeMyth, ConeSensor } from "./components/BeamCone";
 import { RfidLock } from "./components/RfidLock";
 import type { RfidCard, RfidPanelsAt, RfidReader, RfidWhitelistEntry } from "./components/RfidLock";
+import { AirRoom } from "./components/AirRoom";
+import type { AirClock, AirItem, AirParticles, AirReadout, AirWindowState } from "./components/AirRoom";
 import { GnssSky } from "./components/GnssSky";
 import type { GnssProgress, GnssReadout, GnssSat, GnssStatus, GnssTimer, GnssWindow } from "./components/GnssSky";
 import { NmeaFields } from "./components/NmeaFields";
@@ -430,6 +432,15 @@ interface Cut {
   rfidLockLabel?: string;
   rfidCaption?: string;
   rfidCaptionAtSeconds?: number;
+  // Air room props (type: "air_room"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
+  airParticles?: AirParticles[];
+  airItems?: AirItem[];
+  airWindow?: AirWindowState[];
+  airClock?: AirClock;
+  airReadouts?: AirReadout[];
+  airViewHeight?: number;
+  airCaption?: string;
+  airCaptionAtSeconds?: number;
   // GNSS sky props (type: "gnss_sky"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
   skySats?: GnssSat[];
   skyRoof?: GnssWindow[];
@@ -1102,6 +1113,18 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         beams={cut.coneBeams} sensors={cut.coneSensors} objects={cut.coneObjects} myth={cut.coneMyth}
         rangeMeters={cut.coneRangeMeters} viewHeight={cut.coneViewHeight}
         caption={cut.coneCaption} captionAtSeconds={cut.coneCaptionAtSeconds} points={cut.points}
+        textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
+        surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
+      />
+    );
+  }
+
+  if (cut.type === "air_room" && cut.name) {
+    return maybeWrapWithBg(
+      <AirRoom
+        name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline}
+        particles={cut.airParticles} items={cut.airItems} windowStates={cut.airWindow} clock={cut.airClock} readouts={cut.airReadouts}
+        viewHeight={cut.airViewHeight} caption={cut.airCaption} captionAtSeconds={cut.airCaptionAtSeconds} points={cut.points}
         textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
         surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
       />

@@ -38,6 +38,7 @@ export { PhoneRmaker } from "./PhoneRmaker";
 export { TlsCert } from "./TlsCert";
 export { Roadmap } from "./Roadmap";
 export { BeamCone } from "./BeamCone";
+export { AirRoom } from "./AirRoom";
 export { RfidLock } from "./RfidLock";
 export { LoadCell } from "./LoadCell";
 export type { ParticleType } from "./ParticleOverlay";
@@ -64,6 +65,7 @@ export type { RmakerDevice, RmakerLogLine, RmakerPowerStep, RmakerRoute, RmakerS
 export type { CertCard, CertClock, CertClockPoint, CertLog, CertLogLine, CertRow, CertTone, CertVerdict } from "./TlsCert";
 export type { RoadmapFocus, RoadmapItem, RoadmapStage } from "./Roadmap";
 export type { ConeBeam, ConeMyth, ConeObject, ConeSensor } from "./BeamCone";
+export type { AirClock, AirItem, AirLevel, AirParticles, AirReadout, AirWindowState } from "./AirRoom";
 export type { RfidCard, RfidPanelsAt, RfidReader, RfidWhitelistEntry } from "./RfidLock";
 export type { CellBench, CellBridge, CellChart, CellReadout, CellStep, CellWiring, CellWeight, CellPin, CellColumn, CellWire, CellSeries, CellTone } from "./LoadCell";
 export type { GnssProgress, GnssReadout, GnssSat, GnssStatus, GnssSystem, GnssTimer, GnssWindow } from "./GnssSky";
