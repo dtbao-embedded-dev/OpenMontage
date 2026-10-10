@@ -60,6 +60,8 @@ import { FlashMap } from "./components/FlashMap";
 import type { FlashGroup, FlashLegendItem, FlashLink, FlashMeter, FlashPower } from "./components/FlashMap";
 import { PhoneGatt } from "./components/PhoneGatt";
 import type { GattDialog, GattLogLine, GattRow, GattSideItem, GattValue } from "./components/PhoneGatt";
+import { WledApp } from "./components/WledApp";
+import type { WledAudio, WledPacket, WledScreen, WledStep, WledStrip } from "./components/WledApp";
 import { BrowserPage } from "./components/BrowserPage";
 import type { BrowserCard, BrowserFrameLine, BrowserLedState, BrowserValue, BrowserWindow } from "./components/BrowserPage";
 import { PhoneProv } from "./components/PhoneProv";
@@ -436,6 +438,16 @@ interface Cut {
   gattLog?: GattLogLine[];
   gattLogTitle?: string;
   gattLogLines?: number;
+  // WLED app props (type: "wled_app"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
+  wledScreens?: WledScreen[];
+  wledPanelHeight?: number;
+  wledPhoneWidth?: number;
+  wledPanelCaption?: string;
+  wledStrips?: WledStrip[];
+  wledEffects?: WledStep[];
+  wledAudio?: WledAudio;
+  wledPackets?: WledPacket[];
+  wledCaption?: string;
   // Browser page props (type: "browser_page"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
   browserWindows?: BrowserWindow[];
   browserPageTitle?: string;
@@ -1053,6 +1065,19 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         ledLabel={cut.browserLedLabel} status={cut.browserStatus} frames={cut.browserFrames} framesTitle={cut.browserFramesTitle}
         framesLines={cut.browserFramesLines} espLabel={cut.browserEspLabel} espAtSeconds={cut.browserEspAtSeconds} espLed={cut.browserEspLed}
         caption={cut.browserCaption} points={cut.points}
+        textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
+        surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
+      />
+    );
+  }
+
+  if (cut.type === "wled_app" && cut.name) {
+    return maybeWrapWithBg(
+      <WledApp
+        name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline}
+        screens={cut.wledScreens} panelHeight={cut.wledPanelHeight} phoneWidth={cut.wledPhoneWidth} panelCaption={cut.wledPanelCaption}
+        strips={cut.wledStrips} effects={cut.wledEffects} audio={cut.wledAudio} packets={cut.wledPackets}
+        caption={cut.wledCaption} points={cut.points}
         textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
         surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
       />
