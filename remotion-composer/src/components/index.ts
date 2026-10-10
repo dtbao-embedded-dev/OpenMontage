@@ -78,3 +78,5 @@ export type { GnssProgress, GnssReadout, GnssSat, GnssStatus, GnssSystem, GnssTi
 export type { NmeaStep, NmeaTone } from "./NmeaFields";
 export { LoraLink } from "./LoraLink";
 export type { LoraBandMarker, LoraBands, LoraBandSegment, LoraChirpRow, LoraChirps, LoraGauge, LoraNode, LoraPacket, LoraProfile, LoraStatus } from "./LoraLink";
+export { Rs485Bus } from "./Rs485Bus";
+export type { RbBadge, RbFrame, RbGroup, RbNode, RbPacket, RbTag } from "./Rs485Bus";

@@ -58,6 +58,8 @@ import { StepperDrive } from "./components/StepperDrive";
 import type { StepperMotor } from "./components/StepperDrive";
 import { MotorDrive } from "./components/MotorDrive";
 import type { MotorReadout, MotorState, MotorStatus, MotorTag, MotorMode } from "./components/MotorDrive";
+import { Rs485Bus } from "./components/Rs485Bus";
+import type { RbFrame, RbNode, RbPacket, RbTag } from "./components/Rs485Bus";
 import { RfidLock } from "./components/RfidLock";
 import type { RfidCard, RfidPanelsAt, RfidReader, RfidWhitelistEntry } from "./components/RfidLock";
 import { IrRemote } from "./components/IrRemote";
@@ -496,6 +498,21 @@ interface Cut {
   mdStatus?: MotorStatus[];
   mdCaption?: string;
   mdCaptionAtSeconds?: number;
+  // RS-485 bus props (type: "rs485_bus"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
+  rbNodes?: RbNode[];
+  rbBusAtSeconds?: number;
+  rbWireLabels?: [string, string];
+  rbTerminators?: { side: "left" | "right"; label?: string; atSeconds?: number }[];
+  rbGround?: { label?: string; atSeconds?: number };
+  rbNoise?: [number, number][];
+  rbPackets?: RbPacket[];
+  rbSpan?: { text: string; atSeconds?: number };
+  rbTags?: RbTag[];
+  rbDiagramHeight?: number;
+  rbFrames?: RbFrame[];
+  rbStatus?: { atSeconds: number; untilSeconds?: number; text: string; tone?: "neutral" | "accent" | "good" | "bad" | "muted" | "warn" }[];
+  rbCaption?: string;
+  rbCaptionAtSeconds?: number;
   // GNSS sky props (type: "gnss_sky"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
   skySats?: GnssSat[];
   skyRoof?: GnssWindow[];
@@ -1180,6 +1197,20 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         beams={cut.coneBeams} sensors={cut.coneSensors} objects={cut.coneObjects} myth={cut.coneMyth}
         rangeMeters={cut.coneRangeMeters} viewHeight={cut.coneViewHeight}
         caption={cut.coneCaption} captionAtSeconds={cut.coneCaptionAtSeconds} points={cut.points}
+        textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
+        surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
+      />
+    );
+  }
+
+  if (cut.type === "rs485_bus" && cut.name) {
+    return maybeWrapWithBg(
+      <Rs485Bus
+        name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline}
+        nodes={cut.rbNodes} busAtSeconds={cut.rbBusAtSeconds} wireLabels={cut.rbWireLabels} terminators={cut.rbTerminators}
+        ground={cut.rbGround} noise={cut.rbNoise} packets={cut.rbPackets} span={cut.rbSpan} tags={cut.rbTags}
+        diagramHeight={cut.rbDiagramHeight} frames={cut.rbFrames} status={cut.rbStatus}
+        caption={cut.rbCaption} captionAtSeconds={cut.rbCaptionAtSeconds} points={cut.points}
         textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
         surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
       />
