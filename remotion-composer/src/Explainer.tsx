@@ -70,6 +70,8 @@ import type { IsrBadge, IsrBox, IsrChannel, IsrCodeTag, IsrCrash, IsrEvent, IsrI
 import type { CanAck, CanArb, CanField, CanFrameRow, CanGauge, CanInfo, CanNode, CanObdPin, CanPacket, CanPin, CanStatus } from "./components/CanBus";
 import { RtosSync } from "./components/RtosSync";
 import type { RtCode, RtInfo, RtInvPanel, RtLink, RtLogLine, RtNode, RtPacket, RtStack, RtStatus } from "./components/RtosSync";
+import { MemMap } from "./components/MemMap";
+import type { MemChip, MemCode, MemInfo, MemLogLine, MemPanel, MemRegion, MemStatus, MemTable } from "./components/MemMap";
 import { AirRoom } from "./components/AirRoom";
 import type { AirClock, AirItem, AirParticles, AirReadout, AirWindowState } from "./components/AirRoom";
 import { GnssSky } from "./components/GnssSky";
@@ -535,6 +537,17 @@ interface Cut {
   rtStatus?: RtStatus[];
   rtCaption?: string;
   rtCaptionAtSeconds?: number;
+  // Memory map props (type: "mem_map"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
+  memRegions?: MemRegion[];
+  memChips?: MemChip[];
+  memTable?: MemTable;
+  memCode?: MemCode;
+  memLog?: { title?: string; lines: MemLogLine[]; atSeconds?: number; fontSize?: number };
+  memInfo?: MemInfo[];
+  memStatus?: MemStatus[];
+  memOrder?: MemPanel[];
+  memCaption?: string;
+  memCaptionAtSeconds?: number;
   // Air room props (type: "air_room"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
   airParticles?: AirParticles[];
   airItems?: AirItem[];
@@ -1373,6 +1386,19 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         fields={cut.canFields} arb={cut.canArb} ack={cut.canAck}
         obdPins={cut.canObdPins} obdPhoto={cut.canObdPhoto} info={cut.canInfo} status={cut.canStatus}
         caption={cut.canCaption} captionAtSeconds={cut.canCaptionAtSeconds} points={cut.points}
+        textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
+        surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
+      />
+    );
+  }
+
+  if (cut.type === "mem_map" && cut.name) {
+    return maybeWrapWithBg(
+      <MemMap
+        name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline}
+        regions={cut.memRegions} chips={cut.memChips} table={cut.memTable} code={cut.memCode} log={cut.memLog}
+        info={cut.memInfo} status={cut.memStatus} order={cut.memOrder}
+        caption={cut.memCaption} captionAtSeconds={cut.memCaptionAtSeconds} points={cut.points}
         textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
         surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
       />
