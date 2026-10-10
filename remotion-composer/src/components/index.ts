@@ -31,6 +31,7 @@ export { BrowserPage } from "./BrowserPage";
 export { PhoneProv } from "./PhoneProv";
 export { PhoneRmaker } from "./PhoneRmaker";
 export { TlsCert } from "./TlsCert";
+export { Roadmap } from "./Roadmap";
 export type { ParticleType } from "./ParticleOverlay";
 export type { CameraMotion, AnimeSceneProps } from "./AnimeScene";
 export type { TerminalStep } from "./TerminalScene";
@@ -51,3 +52,4 @@ export type { WledAudio, WledNetwork, WledPacket, WledRow, WledScreen, WledSegme
 export type { ProvLogLine, ProvNetwork, ProvScreen, ProvSideItem, ProvStep } from "./PhoneProv";
 export type { RmakerDevice, RmakerLogLine, RmakerPowerStep, RmakerRoute, RmakerSchedule, RmakerScreen } from "./PhoneRmaker";
 export type { CertCard, CertClock, CertClockPoint, CertLog, CertLogLine, CertRow, CertTone, CertVerdict } from "./TlsCert";
+export type { RoadmapFocus, RoadmapItem, RoadmapStage } from "./Roadmap";

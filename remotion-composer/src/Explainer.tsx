@@ -62,6 +62,8 @@ import { PhoneGatt } from "./components/PhoneGatt";
 import type { GattDialog, GattLogLine, GattRow, GattSideItem, GattValue } from "./components/PhoneGatt";
 import { WledApp } from "./components/WledApp";
 import type { WledAudio, WledPacket, WledScreen, WledStep, WledStrip } from "./components/WledApp";
+import { Roadmap } from "./components/Roadmap";
+import type { RoadmapFocus, RoadmapItem, RoadmapStage } from "./components/Roadmap";
 import { BrowserPage } from "./components/BrowserPage";
 import type { BrowserCard, BrowserFrameLine, BrowserLedState, BrowserValue, BrowserWindow } from "./components/BrowserPage";
 import { PhoneProv } from "./components/PhoneProv";
@@ -488,6 +490,20 @@ interface Cut {
   certClock?: CertClock;
   certVerdict?: CertVerdict[];
   certLog?: CertLog;
+  // Learning roadmap props (type: "roadmap"; reuses `name`, `eyebrow`, `tagline`, `layout`)
+  roadmapMode?: "overview" | "stage";
+  roadmapStages?: RoadmapStage[];
+  roadmapStart?: { text: string; sub?: string };
+  roadmapGoal?: { text: string; sub?: string; atSeconds?: number; reachedAtSeconds?: number };
+  roadmapFocus?: RoadmapFocus[];
+  roadmapGhost?: boolean;
+  roadmapLegend?: RoadmapItem[];
+  roadmapLegendTitle?: string;
+  roadmapCurrent?: number;
+  roadmapTopics?: RoadmapItem[];
+  roadmapDocs?: RoadmapItem[];
+  roadmapProject?: RoadmapItem;
+  roadmapVideos?: { items: string[]; atSeconds?: number; label?: string };
 }
 
 interface Overlay {
@@ -1091,6 +1107,19 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         ledLabel={cut.browserLedLabel} status={cut.browserStatus} frames={cut.browserFrames} framesTitle={cut.browserFramesTitle}
         framesLines={cut.browserFramesLines} espLabel={cut.browserEspLabel} espAtSeconds={cut.browserEspAtSeconds} espLed={cut.browserEspLed}
         caption={cut.browserCaption} points={cut.points}
+        textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
+        surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
+      />
+    );
+  }
+
+  if (cut.type === "roadmap" && cut.name && cut.roadmapStages) {
+    return maybeWrapWithBg(
+      <Roadmap
+        name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline} mode={cut.roadmapMode} stages={cut.roadmapStages}
+        start={cut.roadmapStart} goal={cut.roadmapGoal} focus={cut.roadmapFocus} ghost={cut.roadmapGhost} legend={cut.roadmapLegend}
+        legendTitle={cut.roadmapLegendTitle} current={cut.roadmapCurrent} topics={cut.roadmapTopics} docs={cut.roadmapDocs}
+        project={cut.roadmapProject} videos={cut.roadmapVideos}
         textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
         surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
       />
