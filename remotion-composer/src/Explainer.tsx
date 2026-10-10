@@ -54,6 +54,8 @@ import { BeamCone } from "./components/BeamCone";
 import type { ConeBeam, ConeObject, ConeMyth, ConeSensor } from "./components/BeamCone";
 import { RfidLock } from "./components/RfidLock";
 import type { RfidCard, RfidPanelsAt, RfidReader, RfidWhitelistEntry } from "./components/RfidLock";
+import { IrRemote } from "./components/IrRemote";
+import type { IrAcState, IrButton, IrLearned, IrShot, IrStrip } from "./components/IrRemote";
 import { AirRoom } from "./components/AirRoom";
 import type { AirClock, AirItem, AirParticles, AirReadout, AirWindowState } from "./components/AirRoom";
 import { GnssSky } from "./components/GnssSky";
@@ -432,6 +434,25 @@ interface Cut {
   rfidLockLabel?: string;
   rfidCaption?: string;
   rfidCaptionAtSeconds?: number;
+  // IR remote props (type: "ir_remote"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
+  irHandTrack?: [number, "remote" | "phone"][];
+  irRemoteButtons?: IrButton[];
+  irPhoneButtons?: IrButton[];
+  irPhoneTitle?: string;
+  irShots?: IrShot[];
+  irAcStart?: IrAcState;
+  irTvStart?: boolean;
+  irHide?: ("ac" | "tv")[];
+  irLearned?: IrLearned[];
+  irLearnedTitle?: string;
+  irLearnedAtSeconds?: number;
+  irStrips?: IrStrip[];
+  irStripBlock?: { symbols: number; label: string; atSeconds?: number };
+  irStripFix?: { label: string; atSeconds: number };
+  irStripsAtSeconds?: number;
+  irIdleStatus?: string;
+  irCaption?: string;
+  irCaptionAtSeconds?: number;
   // Air room props (type: "air_room"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
   airParticles?: AirParticles[];
   airItems?: AirItem[];
@@ -1139,6 +1160,21 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         panelsAt={cut.rfidPanelsAt} checkTrack={cut.rfidCheckTrack} unlockSeconds={cut.rfidUnlockSeconds}
         fieldLabel={cut.rfidFieldLabel} fieldAtSeconds={cut.rfidFieldAtSeconds} lockLabel={cut.rfidLockLabel}
         caption={cut.rfidCaption} captionAtSeconds={cut.rfidCaptionAtSeconds} points={cut.points}
+        textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
+        surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
+      />
+    );
+  }
+
+  if (cut.type === "ir_remote" && cut.name) {
+    return maybeWrapWithBg(
+      <IrRemote
+        name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline}
+        handTrack={cut.irHandTrack} remoteButtons={cut.irRemoteButtons} phoneButtons={cut.irPhoneButtons}
+        phoneTitle={cut.irPhoneTitle} shots={cut.irShots} acStart={cut.irAcStart} tvStart={cut.irTvStart} hide={cut.irHide}
+        learned={cut.irLearned} learnedTitle={cut.irLearnedTitle} learnedAtSeconds={cut.irLearnedAtSeconds}
+        strips={cut.irStrips} stripBlock={cut.irStripBlock} stripFix={cut.irStripFix} stripsAtSeconds={cut.irStripsAtSeconds}
+        idleStatus={cut.irIdleStatus} caption={cut.irCaption} captionAtSeconds={cut.irCaptionAtSeconds} points={cut.points}
         textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
         surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
       />
