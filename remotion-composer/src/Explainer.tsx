@@ -50,6 +50,10 @@ import { MetricBars } from "./components/MetricBars";
 import type { MetricRow } from "./components/MetricBars";
 import { BoardMatrix } from "./components/BoardMatrix";
 import type { MatrixBoard, MatrixRow, MatrixFocus, MatrixVerdict } from "./components/BoardMatrix";
+import { GnssSky } from "./components/GnssSky";
+import type { GnssProgress, GnssReadout, GnssSat, GnssStatus, GnssTimer, GnssWindow } from "./components/GnssSky";
+import { NmeaFields } from "./components/NmeaFields";
+import type { NmeaStep } from "./components/NmeaFields";
 import { CircuitDiagram } from "./components/CircuitDiagram";
 import type { CircuitPart } from "./components/CircuitDiagram";
 import { LoadCell } from "./components/LoadCell";
@@ -400,6 +404,27 @@ interface Cut {
   matrixImageHeight?: number;
   matrixSource?: string;
   matrixSourceAtSeconds?: number;
+  // GNSS sky props (type: "gnss_sky"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
+  skySats?: GnssSat[];
+  skyRoof?: GnssWindow[];
+  skyStatus?: GnssStatus[];
+  skyTimer?: GnssTimer;
+  skyProgress?: GnssProgress;
+  skyReadouts?: GnssReadout[];
+  skyThreshold?: number;
+  skyThresholdLabel?: string;
+  skyPlotSize?: number;
+  skyHideBars?: boolean;
+  skyCaption?: string;
+  skyCaptionAtSeconds?: number;
+  // NMEA fields props (type: "nmea_fields"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
+  nmeaSentence?: string;
+  nmeaTitle?: string;
+  nmeaContext?: string[];
+  nmeaSteps?: NmeaStep[];
+  nmeaMaxRows?: number;
+  nmeaSource?: string;
+  nmeaFontSize?: number;
   // Circuit diagram props (type: "circuit_diagram"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
   circuitParts?: CircuitPart[];
   circuitViewHeight?: number;
@@ -1038,6 +1063,32 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline}
         boards={cut.matrixBoards} rows={cut.matrixRows} focus={cut.matrixFocus} verdicts={cut.matrixVerdicts}
         imageHeight={cut.matrixImageHeight} source={cut.matrixSource} sourceAtSeconds={cut.matrixSourceAtSeconds} points={cut.points}
+        textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
+        surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
+      />
+    );
+  }
+
+  if (cut.type === "gnss_sky" && cut.name && cut.skySats) {
+    return maybeWrapWithBg(
+      <GnssSky
+        name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline}
+        sats={cut.skySats} roof={cut.skyRoof} status={cut.skyStatus} timer={cut.skyTimer} progress={cut.skyProgress}
+        readouts={cut.skyReadouts} threshold={cut.skyThreshold} thresholdLabel={cut.skyThresholdLabel}
+        plotSize={cut.skyPlotSize} hideBars={cut.skyHideBars} caption={cut.skyCaption} captionAtSeconds={cut.skyCaptionAtSeconds}
+        points={cut.points}
+        textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
+        surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
+      />
+    );
+  }
+
+  if (cut.type === "nmea_fields" && cut.name && cut.nmeaSentence) {
+    return maybeWrapWithBg(
+      <NmeaFields
+        name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline}
+        sentence={cut.nmeaSentence} sentenceTitle={cut.nmeaTitle} contextLines={cut.nmeaContext} steps={cut.nmeaSteps}
+        maxRows={cut.nmeaMaxRows} source={cut.nmeaSource} sentenceFontSize={cut.nmeaFontSize} points={cut.points}
         textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
         surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
       />
