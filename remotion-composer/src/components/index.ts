@@ -73,6 +73,8 @@ export type { AirClock, AirItem, AirLevel, AirParticles, AirReadout, AirWindowSt
 export type { StepChopper, StepMode, StepperBadge, StepperMotor } from "./StepperDrive";
 export type { RfidCard, RfidPanelsAt, RfidReader, RfidWhitelistEntry } from "./RfidLock";
 export type { IrAcState, IrButton, IrLearned, IrShot, IrStrip } from "./IrRemote";
+export { CanBus } from "./CanBus";
+export type { CanAck, CanArb, CanByteGroup, CanField, CanFrameRow, CanGauge, CanInfo, CanNode, CanObdPin, CanPacket, CanPin, CanStatus } from "./CanBus";
 export type { CellBench, CellBridge, CellChart, CellReadout, CellStep, CellWiring, CellWeight, CellPin, CellColumn, CellWire, CellSeries, CellTone } from "./LoadCell";
 export type { GnssProgress, GnssReadout, GnssSat, GnssStatus, GnssSystem, GnssTimer, GnssWindow } from "./GnssSky";
 export type { NmeaStep, NmeaTone } from "./NmeaFields";
