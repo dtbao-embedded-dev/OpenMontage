@@ -234,26 +234,27 @@ export const RfidLock: React.FC<RfidLockProps> = ({
         <rect x={0} y={0} width={CARD_W} height={46} rx={20} fill={accentColor} opacity={0.9} />
         <rect x={0} y={26} width={CARD_W} height={20} fill={accentColor} opacity={0.9} />
         <text x={20} y={33} fontSize={26} fontWeight={700} fill="#FFFFFF">{c.label}</text>
-        {/* Coil and chip, glowing while the reader field powers the card */}
-        <rect x={22} y={64} width={150} height={98} rx={12} fill="none" stroke={powered ? accentColor : "#B9BCC2"} strokeWidth={3} />
-        <rect x={32} y={74} width={130} height={78} rx={8} fill="none" stroke={powered ? accentColor : "#B9BCC2"} strokeWidth={3} />
-        <rect x={80} y={98} width={34} height={30} rx={5} fill={powered ? accentColor : "#8E9198"} />
-        {powered && <rect x={72} y={90} width={50} height={46} rx={8} fill={accentColor} opacity={0.18} />}
-        <text x={192} y={92} fontSize={22} fontWeight={600} fill={mutedColor}>UID</text>
+        {/* Coil and chip on the right, glowing while the reader field powers the card */}
+        <rect x={226} y={64} width={86} height={92} rx={12} fill="none" stroke={powered ? accentColor : "#B9BCC2"} strokeWidth={3} />
+        <rect x={236} y={74} width={66} height={72} rx={8} fill="none" stroke={powered ? accentColor : "#B9BCC2"} strokeWidth={3} />
+        <rect x={256} y={96} width={26} height={26} rx={5} fill={powered ? accentColor : "#8E9198"} />
+        {powered && <rect x={248} y={88} width={42} height={42} rx={8} fill={accentColor} opacity={0.18} />}
+        {/* UID on the left, full width of the text column */}
+        <text x={20} y={84} fontSize={22} fontWeight={600} fill={mutedColor}>UID</text>
         {bytesOf(uid).length <= 4 ? (
-          <text x={192} y={128} fontSize={30} fontWeight={700} fontFamily={MONO} fill={flash > 0 ? accentColor : textColor}>
+          <text x={20} y={124} fontSize={32} fontWeight={700} fontFamily={MONO} fill={flash > 0 ? accentColor : textColor}>
             {uid}
           </text>
         ) : (
           <>
-            <text x={192} y={124} fontSize={24} fontWeight={700} fontFamily={MONO} fill={textColor}>{bytesOf(uid).slice(0, 4).join(" ")}</text>
-            <text x={192} y={154} fontSize={24} fontWeight={700} fontFamily={MONO} fill={textColor}>{bytesOf(uid).slice(4).join(" ")}</text>
+            <text x={20} y={118} fontSize={27} fontWeight={700} fontFamily={MONO} fill={flash > 0 ? accentColor : textColor}>{bytesOf(uid).slice(0, 4).join(" ")}</text>
+            <text x={20} y={150} fontSize={27} fontWeight={700} fontFamily={MONO} fill={flash > 0 ? accentColor : textColor}>{bytesOf(uid).slice(4).join(" ")}</text>
           </>
         )}
         {c.key && (
           <g>
-            <rect x={192} y={160} width={118} height={34} rx={17} fill="#D7F0DD" />
-            <text x={251} y={184} textAnchor="middle" fontSize={22} fontWeight={700} fill={proColor}>AES key</text>
+            <rect x={196} y={164} width={118} height={34} rx={17} fill="#D7F0DD" />
+            <text x={255} y={188} textAnchor="middle" fontSize={22} fontWeight={700} fill={proColor}>AES key</text>
           </g>
         )}
       </g>
