@@ -64,6 +64,8 @@ import { BrowserPage } from "./components/BrowserPage";
 import type { BrowserCard, BrowserFrameLine, BrowserLedState, BrowserValue, BrowserWindow } from "./components/BrowserPage";
 import { PhoneProv } from "./components/PhoneProv";
 import type { ProvLogLine, ProvScreen, ProvSideItem } from "./components/PhoneProv";
+import { TlsCert } from "./components/TlsCert";
+import type { CertCard, CertClock, CertLog, CertVerdict } from "./components/TlsCert";
 import { resolveAsset } from "./lib/resolveAsset";
 import type { ParticleType } from "./components/ParticleOverlay";
 import { resolveTheme, type ThemeConfig, DEFAULT_THEME } from "./Root";
@@ -457,6 +459,11 @@ interface Cut {
   provLog?: ProvLogLine[];
   provLogTitle?: string;
   provLogLines?: number;
+  // TLS certificate props (type: "tls_cert"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
+  certCards?: CertCard[];
+  certClock?: CertClock;
+  certVerdict?: CertVerdict[];
+  certLog?: CertLog;
 }
 
 interface Overlay {
@@ -1022,6 +1029,17 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline} screens={cut.provScreens}
         phoneCaption={cut.provPhoneCaption} sideTitle={cut.provSideTitle} side={cut.provSide}
         log={cut.provLog} logTitle={cut.provLogTitle} logLines={cut.provLogLines} points={cut.points}
+        textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
+        surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
+      />
+    );
+  }
+
+  if (cut.type === "tls_cert" && cut.name) {
+    return maybeWrapWithBg(
+      <TlsCert
+        name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline}
+        cards={cut.certCards} clock={cut.certClock} verdict={cut.certVerdict} log={cut.certLog} points={cut.points}
         textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
         surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
       />
