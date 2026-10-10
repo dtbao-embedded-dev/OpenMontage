@@ -48,6 +48,8 @@ import { WifiTopology } from "./components/WifiTopology";
 import type { TopologyLink, TopologyNode, TopologyRange } from "./components/WifiTopology";
 import { MetricBars } from "./components/MetricBars";
 import type { MetricRow } from "./components/MetricBars";
+import { BoardMatrix } from "./components/BoardMatrix";
+import type { MatrixBoard, MatrixRow, MatrixFocus, MatrixVerdict } from "./components/BoardMatrix";
 import { CircuitDiagram } from "./components/CircuitDiagram";
 import type { CircuitPart } from "./components/CircuitDiagram";
 import { LogicWave } from "./components/LogicWave";
@@ -384,6 +386,14 @@ interface Cut {
   metricMax?: number;
   metricSource?: string;
   metricSourceAtSeconds?: number;
+  // Board matrix props (type: "board_matrix"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
+  matrixBoards?: MatrixBoard[];
+  matrixRows?: MatrixRow[];
+  matrixFocus?: MatrixFocus[];
+  matrixVerdicts?: MatrixVerdict[];
+  matrixImageHeight?: number;
+  matrixSource?: string;
+  matrixSourceAtSeconds?: number;
   // Circuit diagram props (type: "circuit_diagram"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
   circuitParts?: CircuitPart[];
   circuitViewHeight?: number;
@@ -968,6 +978,18 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline}
         nodes={cut.nodes} links={cut.links} ranges={cut.ranges} diagramHeight={cut.diagramHeight}
         points={cut.points} log={cut.timelineLog}
+        textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
+        surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
+      />
+    );
+  }
+
+  if (cut.type === "board_matrix" && cut.name && cut.matrixBoards) {
+    return maybeWrapWithBg(
+      <BoardMatrix
+        name={cut.name} eyebrow={cut.eyebrow} tagline={cut.tagline}
+        boards={cut.matrixBoards} rows={cut.matrixRows} focus={cut.matrixFocus} verdicts={cut.matrixVerdicts}
+        imageHeight={cut.matrixImageHeight} source={cut.matrixSource} sourceAtSeconds={cut.matrixSourceAtSeconds} points={cut.points}
         textColor={textColor} mutedColor={theme.mutedTextColor} accentColor={accent}
         surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
       />
