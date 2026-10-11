@@ -72,6 +72,8 @@ import { RtosSync } from "./components/RtosSync";
 import type { RtCode, RtInfo, RtInvPanel, RtLink, RtLogLine, RtNode, RtPacket, RtStack, RtStatus } from "./components/RtosSync";
 import { MemMap } from "./components/MemMap";
 import type { MemChip, MemCode, MemInfo, MemLogLine, MemPanel, MemRegion, MemStatus, MemTable } from "./components/MemMap";
+import { ChipNaming } from "./components/ChipNaming";
+import type { CnData, CnView } from "./components/ChipNaming";
 import { AirRoom } from "./components/AirRoom";
 import type { AirClock, AirItem, AirParticles, AirReadout, AirWindowState } from "./components/AirRoom";
 import { GnssSky } from "./components/GnssSky";
@@ -539,6 +541,9 @@ interface Cut {
   rtCaption?: string;
   rtCaptionAtSeconds?: number;
   // Memory map props (type: "mem_map"; reuses `name`, `eyebrow`, `tagline`, `points`, `layout`)
+  // Chip naming props (type: "chip_naming"; learning-series logo look, paints its own paper background)
+  cnView?: CnView;
+  cnData?: CnData;
   memRegions?: MemRegion[];
   memChips?: MemChip[];
   memTable?: MemTable;
@@ -1391,6 +1396,10 @@ const SceneRenderer: React.FC<{ cut: Cut; theme: ThemeConfig }> = ({ cut, theme 
         surfaceColor={cut.cardBackgroundColor} borderColor={cut.cardBorderColor} layout={cut.layout}
       />
     );
+  }
+
+  if (cut.type === "chip_naming" && cut.cnView && cut.cnData) {
+    return <ChipNaming view={cut.cnView} data={cut.cnData} />;
   }
 
   if (cut.type === "mem_map" && cut.name) {
