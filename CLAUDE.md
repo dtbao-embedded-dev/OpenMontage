@@ -67,10 +67,11 @@ A brief that explicitly asks for something different overrides a rule; say so wh
   - News (`News-ESP32`): `E:\Baotd\media\brand\tiktok-intro-esp32-tin-tuc-1080x1920.png`
     (blue "TIN TỨC" badge / ESP32 / "Tin mới · Dự án hay"), 1.5 s; `.html` source next to it.
 - Learning series (user decision 2026-10-11): the first script section is spoken over the intro,
-  from 0.5 s: "Video <N>: <what this video does>.", after a greeting (user decision 2026-10-11): Video 1
-  opens with "Chào các bạn, mình sẽ làm một series lộ trình học ESP32 cho các bạn mới tiếp xúc.", every
-  later video with "Chào các bạn, series học ESP32." (sent as "chào các bạn, series học esp32."). The
-  pill appears on the word "video", not on the greeting. When it
+  from 0.5 s (user decision 2026-10-11). Video 1: "Chào các bạn, mình sẽ làm một series lộ trình học ESP32
+  cho các bạn mới tiếp xúc. Video 1: <what this video does>." Every later video: "Chào các bạn, tiếp tục
+  series học ESP32 với video <N>, nói về <what this video does>." (sent lower case: "chào các bạn, tiếp tục
+  series học esp32 với video <N in words>, nói về ..."). The pill appears on the word "video", not on the
+  greeting. When it
   runs past 4.2 s, the intro holds its last frame until the line ends + 0.3 s (ffmpeg
   `tpad=stop_mode=clone`). Under the logo (y ≈ 1360) show a pill "Video <N> · <Title>" from the
   word "video". The content sections start after the intro.
