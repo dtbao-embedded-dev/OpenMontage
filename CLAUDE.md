@@ -191,16 +191,19 @@ Learning series (user decision 2026-10-11): the look is derived from the channel
   sent to the voice server is **all lower case** — sentence starts, names and English terms
   included (`esp32-s3`, `wifi`, `arduino`). Write a word in **upper case only when it must be
   read letter by letter** (`ESP`, `GPIO`, `HTTP`, `UART`). This changes only the case: the words
-  stay the script's words, and the on-screen text keeps normal casing. The closing line below is
-  verbatim in its words; it is sent as
-  "có thắc mắc gì về ESP, nhắn tin trực tiếp cho mình nhé, mình trả lời từng người."
+  stay the script's words, and the on-screen text keeps normal casing. The closing lines below are
+  verbatim in their words; send them lower case as written in the next bullet but one.
 - **Terms the voice garbles:** fixed on the voice-tts server, not in OpenMontage. Keep the term in
   the script and do not rephrase or respell it here. If a term still comes out wrong, stop and
   report it with the take, the time and what the check heard. Known so far (all with `normal`; `special`
   fixes board → "bo", AP → "ây pi", POST): "board" → "bot", "ESP-NOW" → "ESP-NOV kép" (W spelled as "vê kép"),
   "HTTP POST" → "HTTP phốt", "AP" → "áp".
 - **Closing line:** the last spoken sentence of every video is, verbatim:
-  "Có thắc mắc gì về ESP, nhắn tin trực tiếp cho mình nhé, mình trả lời từng người."
+  - Learning series (user decision 2026-10-11):
+    "Trong video có phần nào các bạn chưa hiểu thì có thể comment hoặc nhắn tin cho mình nha."
+    (sent as "trong video có phần nào các bạn chưa hiểu thì có thể comment hoặc nhắn tin cho mình nha.")
+  - News series: "Có thắc mắc gì về ESP, nhắn tin trực tiếp cho mình nhé, mình trả lời từng người."
+    (sent as "có thắc mắc gì về ESP, nhắn tin trực tiếp cho mình nhé, mình trả lời từng người.")
   Put it at the end of the final script section, after any other call to action.
 
 ### Sync (visuals ↔ narration)
