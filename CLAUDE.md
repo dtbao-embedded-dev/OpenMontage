@@ -232,6 +232,13 @@ Learning series (user decision 2026-10-11): the look is derived from the channel
   defaults to 600 s and otherwise reports a finished render as failed.
 - Explainer props: set `tailPaddingSeconds: 0` when the last cut holds the end frame,
   or the video ends on 1 s of bare background.
+- HyperFrames (0.8.146 on this machine) mp4 output has an 8 px black strip on the right edge
+  (x 1072–1079) in every mode (GPU, software, streaming off); its png-sequence capture is clean,
+  so the fault is in the encode step. Snapshots do not show it. After every HyperFrames render,
+  check the pixel at x 1076 and fix with
+  `ffmpeg -i in.mp4 -vf "fillborders=right=8:mode=smear" -c:v libx264 -crf 16 -preset slow
+  -pix_fmt yuv420p -movflags +faststart -c:a copy out.mp4` (content keeps a ≥ 160 px right margin,
+  so the strip is background only). Found 2026-10-11; Video 46 has the strip too.
 
 ### Images
 
