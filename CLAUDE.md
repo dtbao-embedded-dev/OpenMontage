@@ -66,9 +66,16 @@ A brief that explicitly asks for something different overrides a rule; say so wh
     `media/logo-basic/esp32-tiktok-avatar.png`).
   - News (`News-ESP32`): `E:\Baotd\media\brand\tiktok-intro-esp32-tin-tuc-1080x1920.png`
     (blue "TIN TỨC" badge / ESP32 / "Tin mới · Dự án hay"), 1.5 s; `.html` source next to it.
-- The intro is music only; the narration starts after it (shift the first section by the intro
-  length: 4.2 s learning, 1.5 s news). It doubles as the TikTok cover, so frame 0 must show it at
-  full opacity — no fade-in.
+- Learning series (user decision 2026-10-11): the first script section is spoken over the intro,
+  from 0.5 s: "Video <N>: <what this video does>." (Video 1 only: the series greeting "Chào các bạn,
+  mình sẽ làm một series lộ trình học ESP32 cho các bạn mới tiếp xúc." comes before it). When it
+  runs past 4.2 s, the intro holds its last frame until the line ends + 0.3 s (ffmpeg
+  `tpad=stop_mode=clone`). Under the logo (y ≈ 1360) show a pill "Video <N> · <Title>" from the
+  word "video". The content sections start after the intro.
+- News series: the intro is music only; the narration starts after it (shift the first section by
+  1.5 s).
+- The intro doubles as the TikTok cover, so frame 0 must show the clean logo/card at full
+  opacity — no fade-in, no overlay on frame 0.
 - HyperFrames: copy it into the workspace assets and add it as the top clip from 0 s
   (`<video muted>` for the mp4, `<img>` for the PNG), fading out over 0.3–0.4 s into the first scene.
   Remotion: copy it into the render `public_dir` and make it the first cut (`"type": "video"` for the
