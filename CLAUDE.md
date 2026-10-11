@@ -57,59 +57,64 @@ A brief that explicitly asks for something different overrides a rule; say so wh
 
 ### Intro card
 
-- Every video opens on the brand intro card of its series (see Release), so the two series
-  have different TikTok covers (user decision 2026-10-10):
-  - Learning series (`Learining-ESP32`):
-    `E:\Baotd\media\brand\tiktok-intro-esp32-chia-se-kien-thuc-1080x1920.png`
-    ("Lập trình nhúng · IoT / ESP32 / Chia sẻ kiến thức" above an ESP32-S3 board).
+- Every video opens on the brand intro of its series (see Release), so the two series have
+  different TikTok covers:
+  - Learning series (`Learining-ESP32`, user decision 2026-10-11): the animated logo intro
+    `E:\Baotd\media\brand\esp32-logo-intro-1080x1920.mp4` — 4.2 s, 30 fps, no audio. Frame 0 is
+    the finished logo (bulb + "ESP32" + "CHIA SẺ KIẾN THỨC" on `#F5F1E8`), held 0.4 s, then it
+    fades and rebuilds itself. Source: `esp32-logo-intro.py` next to it (re-renders the mp4 from
+    `media/logo-basic/esp32-tiktok-avatar.png`).
   - News (`News-ESP32`): `E:\Baotd\media\brand\tiktok-intro-esp32-tin-tuc-1080x1920.png`
-    (blue "TIN TỨC" badge / ESP32 / "Tin mới · Dự án hay", same board and layout).
-
-  Each PNG has an `.html` source next to it with the re-render command.
-- 1.5 s, music only; the narration starts after it (shift the first section by the intro length).
-  It doubles as the TikTok cover frame, so it must be at full opacity on frame 0.
-- Copy it into `projects/<project>/assets/images/` (and the render `public_dir`), then add it as
-  the first cut: `{"type": "image", "source": "<file>", "animation": "static",
-  "transition_in": "cut", "vignette": false, "backgroundColor": "#FAFCFF"}`, fading out into
-  the first scene. Without `transition_in: "cut"` / `vignette: false` it fades in from a dark
+    (blue "TIN TỨC" badge / ESP32 / "Tin mới · Dự án hay"), 1.5 s; `.html` source next to it.
+- The intro is music only; the narration starts after it (shift the first section by the intro
+  length: 4.2 s learning, 1.5 s news). It doubles as the TikTok cover, so frame 0 must show it at
+  full opacity — no fade-in.
+- HyperFrames: copy it into the workspace assets and add it as the top clip from 0 s
+  (`<video muted>` for the mp4, `<img>` for the PNG), fading out over 0.3–0.4 s into the first scene.
+  Remotion: copy it into the render `public_dir` and make it the first cut (`"type": "video"` for the
+  mp4; for the PNG `{"type": "image", "animation": "static", "transition_in": "cut",
+  "vignette": false}`) — without `transition_in: "cut"` / `vignette: false` it fades in from a dark
   frame under a dark vignette.
 
-### Background
+### Look (background, palette, type)
 
-- **Default background:** `E:\Baotd\media\brand\tiktok-bg-light-plain-1080x1920.png` — plain light
-  gradient (`#FAFCFF` top → `#EAF2FC` bottom, faint blue/teal tints in two corners), no grid,
-  traces or other detail. Use it for every scene unless the brief asks for something else.
-- Copy it into `projects/<project>/assets/images/` and pass it as the scene `backgroundImage`
-  with `backgroundOverlay: 0` (the default 0.55 overlay would darken it).
-- It is a light background: use the text palette below, not the dark-theme defaults.
+Learning series (user decision 2026-10-11): the look is derived from the channel logo
+`E:\Baotd\media\logo-basic\esp32-tiktok-avatar.png`. Reference frames (Video 01):
+`projects/espressif-esp32-family-history/styleframes/frame-0..5.png`.
 
-### Text palette and type (Apple light-mode hierarchy)
+- **Background:** flat paper `#F5F1E8` (the logo background, so the intro blends into scene 1).
+  No gradient, grid or photo behind text.
+- **Motif from the bulb:** circuit traces 8 px with round caps ending in ring pads (r 22, stroke 9;
+  filled pad = active/current item) — timelines, trees, buses, flows. The bulb's short rounded light
+  dashes (18 px) mark the one key number. Cards: `#FBF8F2` fill, 4 px `#1B2A34` border, radius 28;
+  pills: same border, fully rounded. An outline in rust = the highlighted card; dashed rust =
+  preview / not ready.
 
-Reference frames: `E:\Baotd\media\brand\tiktok-text-apple-light-example.png` (clean) and
-`tiktok-text-apple-light-spec.png` (annotated). Every text colour is ≥ 4.5:1 on the darkest
-point of the default background.
+| Role | Colour | Font, weight / size (1080x1920) | Tracking, line-height |
+|------|--------|---------------------------------|-----------------------|
+| Eyebrow | `#B23C17` | Inter Semibold 30, upper case | +0.22em |
+| Title | `#1B2A34` | Chakra Petch Bold 96–112 | -0.01em, 1.02 |
+| Subtitle | `#1B2A34` | Inter Semibold 52 | -0.012em, 1.2 |
+| Body | `#3E4B55` | Inter Regular 40 | 0, 1.4 |
+| Year / stat number | `#1B2A34`; the one key number `#C8461E` | Chakra Petch Bold 64–300 | -0.02em |
+| Caption, source | `#56616A` | Inter Regular 28–30 | +0.005em |
+| Status | ok `#1F6B43` / preview `#B23C17` | Inter Semibold 36 | |
+| Strokes, pads, rays | `#C8461E` (logo orange), `#1B2A34` (logo navy) | 8 px traces, 4 px card borders | |
 
-| Role | Colour | Weight / size (1080x1920) | Tracking, line-height |
-|------|--------|---------------------------|-----------------------|
-| Eyebrow | `#0066CC` | Semibold 30 | +0.01em |
-| Title | `#1D1D1F` | Bold 132 | -0.025em, 1.05 |
-| Subtitle | `#1D1D1F` | Semibold 54 | -0.012em, 1.2 |
-| Body | `#424245` | Regular 40 | 0, 1.4 |
-| Stat number | `#1D1D1F`; the one key stat `#0066CC` | Bold 84 | -0.02em |
-| Stat label, caption, source | `#5E5E63` | Regular 28–30 | +0.005em |
-| Status | green `#1D7A34` / red `#D70015` | Semibold 38 | |
-| Card | white 75% opacity, 2 px border black 8%, soft shadow, radius 36 | | |
-
-- Hierarchy by weight and colour step (label → secondary → tertiary), not size alone.
-  Tracking is size-specific: tighten large text, loosen small text slightly.
-- One accent per frame: `#0066CC` only for the eyebrow and the single most important number.
-- Never use `#94A3B8`-light greys for text (≈ 2:1 on this background).
+- Contrast on `#F5F1E8`: `#1B2A34` 13:1, `#3E4B55` 8:1, `#56616A` 5.6:1, `#B23C17` 5.3:1,
+  `#1F6B43` 5.8:1. The logo orange `#C8461E` is only 4.3:1 — strokes and text ≥ 60 px only;
+  smaller orange text uses `#B23C17`.
+- One accent per frame: orange only for the eyebrow, the key number and the highlighted item.
 - Layout: content inside the TikTok safe area (y 220–1520), right margin ≥ 160 px for the
-  action rail, left margin ~88 px.
-- Font: **Inter** (has Vietnamese). Pass `themeConfig.headingFont` / `bodyFont` = `"Inter"`.
-  `Explainer.tsx` loads Inter 400–800 with the `vietnamese` subset; HeroTitle, SectionTitle,
-  StatReveal, EndTag and ProviderChip inherit the theme font. Space Grotesk has no
-  Vietnamese glyphs — never use it for Vietnamese text.
+  action rail, left margin ~88 px. Scenes stack vertically.
+- Fonts: **Chakra Petch** (display: titles, years, numbers, chip names — chamfered like the logo's
+  "ESP32") and **Inter** (everything else). Both have Vietnamese; self-host the woff2 files
+  (Chakra Petch latin + latin-ext + vietnamese subsets). Space Grotesk has no Vietnamese glyphs —
+  never use it for Vietnamese text. Turn ligatures off (`font-variant-ligatures:none`).
+- News series keeps the previous look: background `E:\Baotd\media\brand\tiktok-bg-light-plain-1080x1920.png`
+  (`backgroundOverlay: 0` in Remotion) with the Apple light-mode palette (title `#1D1D1F`,
+  body `#424245`, caption `#5E5E63`, accent `#0066CC`, Inter; reference
+  `media/brand/tiktok-text-apple-light-spec.png`).
 
 ### Audio mix
 
