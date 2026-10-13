@@ -54,6 +54,10 @@ A brief that explicitly asks for something different overrides a rule; say so wh
   video replaces its file (and keeps its number). The render in `projects/` keeps the
   `<topic>-<YYYYMMDD-HHMM>.mp4` name. The user reviews only what is in the release folder — a
   render not copied there is not delivered.
+- **Demo repo cleanup** (user decision 2026-10-13): a scratch firmware/simulation repo made for
+  a video (`E:\esp-v<N>-demo`, `N` = video number) is deleted as soon as that video is delivered
+  (release copy made). Before deleting, copy into `projects/<slug>/work/` anything a re-render
+  still needs (firmware sources, captured logs, Wokwi chips), and drop the path from memory notes.
 
 ### Intro card
 
