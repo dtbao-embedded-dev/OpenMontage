@@ -68,7 +68,7 @@ sys.path.insert(0, str(REPO_ROOT))
 from tools.analysis.zipformer_vi_asr import ZipformerViASR  # noqa: E402
 from tools.audio.vieneu_tts import VieneuTTS  # noqa: E402
 
-VOICE = "Hải Đăng"
+VOICE = "Giọng tôi 1"
 # Unit words the recogniser writes as ASCII or drops ("vôn" -> "vun"/"vol", "mê héc" -> "").
 # Rescoring 222 attempts of nine videos, they were the most missed words on adopted takes;
 # with them ignored every adopted take passes. Number words stay checked: it writes them as words.
