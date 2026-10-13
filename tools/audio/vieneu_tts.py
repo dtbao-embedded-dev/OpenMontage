@@ -2,9 +2,9 @@
 
 Synthesis runs on the voice-tts server (E:/Baotd/software/apps/voice-tts — FastAPI
 around VieNeu-TTS v3 Turbo, https://github.com/pnnbao97/VieNeu-TTS, Apache-2.0), local
-(http://127.0.0.1:8760) or remote; this tool only sends HTTP requests. Configure:
+(http://127.0.0.1:8761) or remote; this tool only sends HTTP requests. Configure:
 
-    VOICE_TTS_SERVER=http://<host>:8760
+    VOICE_TTS_SERVER=http://<host>:8761
     VOICE_TTS_TOKEN=<token>          # from ~/voice-tts/.env on the server
 """
 
@@ -28,7 +28,7 @@ from tools.base_tool import (
     ToolTier,
 )
 
-DEFAULT_VOICE = "Hải Đăng"
+DEFAULT_VOICE = "Giọng tôi 1"
 SAMPLE_RATE = 48000
 
 
@@ -54,7 +54,7 @@ class VieneuTTS(BaseTool):
     dependencies = ["env:VOICE_TTS_SERVER", "env:VOICE_TTS_TOKEN", "python:requests"]
     install_instructions = (
         "Point this tool at the remote voice-tts server:\n"
-        "  VOICE_TTS_SERVER=http://<host>:8760\n"
+        "  VOICE_TTS_SERVER=http://<host>:8761\n"
         "  VOICE_TTS_TOKEN=<token from ~/voice-tts/.env on the server>\n"
         "Server install: python docs/scripts/tool-install.py --remote user@host "
         "(in software/apps/voice-tts)."
@@ -86,7 +86,7 @@ class VieneuTTS(BaseTool):
             "voice": {
                 "type": "string",
                 "default": DEFAULT_VOICE,
-                "description": "Preset voice name, e.g. 'Hải Đăng', 'Mai Anh', 'Thiện Minh' (GET /api/voices)",
+                "description": "Preset voice name, e.g. 'Giọng tôi 1' (cloned), 'Hải Đăng', 'Mai Anh', 'Thiện Minh' (GET /api/voices)",
             },
             "speed": {
                 "type": "number",
