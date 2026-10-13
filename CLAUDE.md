@@ -41,6 +41,9 @@ A brief that explicitly asks for something different overrides a rule; say so wh
   `E:\Baotd\media\release\` (user decision 2026-10-10; folder names spelled as the user created them):
   - `Learining-ESP32\` — the ESP32 learning series. The default.
   - `News-ESP32\` — news videos: only when the brief asks for a news video or for this folder.
+  - `Desk-FX-Screen\` — the Desk FX Screen build series (scripts in `E:\Baotd\media\content\desk-fx-screen\`;
+    user decision 2026-10-13). Named like `Learining-ESP32\` (`Video <N> <Title>.mp4`, `N` = the script's video number);
+    same logo intro and look; the intro line opens this series instead of the learning series.
 
   Name the copy — ready to post as is:
   - `Learining-ESP32\`: `Video <N> <Title>.mp4`. `N` = highest `N` already in that folder + 1
