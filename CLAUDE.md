@@ -249,6 +249,13 @@ Learning series (user decision 2026-10-11): the look is derived from the channel
 
 ### Render
 
+- **Check the whole video before every render** (user decision 2026-10-13): a render is not a way to find
+  problems. Before the first render and before any re-render, snapshot the full composition (every ~1 s, plus
+  every phase change and both sides of every cut), go through all of it, list every defect (overlap, overflow,
+  wrong or late cue, blank/bare-background frame at a cut, element visible before its cue, typo, wrong fact),
+  fix them all, re-check the fixed spots, then render once. Never re-render after fixing one issue while the
+  rest of the video is unchecked. Cuts: crossfade scenes (alternate tracks over one shared background), so no
+  frame shows only the bare background.
 - Render Remotion on the GPU: pass `remotion_gl: "angle"` to `video_compose` (AMD RX 6700 XT).
   Benchmark on this machine (300 frames, 1080x1920): 64 s CPU default vs 15 s with `angle`,
   SSIM 0.997 — visually identical. More `--concurrency` does not help; the CPU rasteriser is the bottleneck.
