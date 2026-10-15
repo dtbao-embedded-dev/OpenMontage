@@ -155,12 +155,13 @@ Learning series (user decision 2026-10-11): the look is derived from the channel
   terms; no phonetic respelling). The voice notes and ASR spellings in memory were measured with
   "Hải Đăng" — re-check a term before relying on them.
 - **The voice-tts server** (`E:\Baotd\software\apps\voice-tts`, VieNeu v3 Turbo model, 48 kHz).
-  It may run on this machine (the VoiceTTS tray app, `http://127.0.0.1:8761` since 2026-10-13;
-  it was 8760 before) or on a remote
-  host; both are fine. The homelab server is retired (2026-10-09):
+  It may run on this machine or on a remote host; both are fine. On this machine the port depends on
+  how it was started (voice-tts README): the tray / `serve` backend (Startup shortcut "Voice TTS Server")
+  listens on `http://127.0.0.1:8760`, the GUI window's backend on `8761`. Check which one answers
+  `/api/status` and set `.env` to it (2026-10-15: the tray server on 8760). The homelab server is retired (2026-10-09):
 
   ```sh
-  curl -f -X POST http://<host>:8761/api/tts/stream \
+  curl -f -X POST http://<host>:8760/api/tts/stream \
     -H "Authorization: Bearer <token>" \
     -H "Content-Type: application/json" \
     --data-binary @request.json --output speech.wav
@@ -170,7 +171,7 @@ Learning series (user decision 2026-10-11): the look is derived from the channel
   `"format": "wav"` is required — the default `"f32"` streams raw float32, not a WAV file.
   `"pronunciation": "special"` (server ≥ 0.7.0) turns on the server lexicon that fixes the garbled
   terms below; the default `"normal"` reads the text as typed and still says "bot" / "áp".
-  Host: `VOICE_TTS_SERVER` in the repo `.env` (port 8761). Never point it back at the retired
+  Host: `VOICE_TTS_SERVER` in the repo `.env` (port 8760, or 8761 for the GUI window). Never point it back at the retired
   homelab address.
   Token: `VOICE_TTS_TOKEN` in the repo `.env` (gitignored); never write the token into this file or any tracked file. The token lives in
   `~/voice-tts/.env` on the server. Check readiness with `voice-tts status --wait 120`.
