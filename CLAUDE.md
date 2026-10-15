@@ -43,7 +43,7 @@ A brief that explicitly asks for something different overrides a rule; say so wh
   - `News-ESP32\` — news videos: only when the brief asks for a news video or for this folder.
   - `Desk-FX-Screen\` — the Desk FX Screen build series (scripts in `E:\Baotd\media\content\desk-fx-screen\`;
     user decision 2026-10-13). Named like `Learining-ESP32\` (`Video <N> <Title>.mp4`, `N` = the script's video number);
-    same logo intro and look; the intro line opens this series instead of the learning series.
+    its own intro (see Intro card), the same look; the intro line opens this series instead of the learning series.
 
   Name the copy — ready to post as is:
   - `Learining-ESP32\`: `Video <N> <Title>.mp4`. `N` = highest `N` already in that folder + 1
@@ -64,8 +64,14 @@ A brief that explicitly asks for something different overrides a rule; say so wh
 
 ### Intro card
 
-- Every video opens on the brand intro of its series (see Release), so the two series have
-  different TikTok covers:
+- Every video opens on the brand intro of its series (see Release), so each series has its own
+  TikTok cover:
+  - Desk FX Screen series (`Desk-FX-Screen`, user decision 2026-10-15): the learning-series logo intro
+    with a rust pill "SERIES · DESK FX SCREEN" above the bulb on every frame, frame 0 included —
+    `E:\Baotd\media\brand\desk-fx-screen-logo-intro-1080x1920.mp4` (same 4.2 s timing) and
+    `desk-fx-screen-logo-intro-last.png` for the hold; source `desk-fx-screen-logo-intro.py` next to them
+    (overlays the badge on `esp32-logo-intro-1080x1920.mp4`; re-run it after re-rendering that mp4).
+    Everything else below for the learning series (intro line, pill, hold) applies to it too.
   - Learning series (`Learining-ESP32`, user decision 2026-10-11): the animated logo intro
     `E:\Baotd\media\brand\esp32-logo-intro-1080x1920.mp4` — 4.2 s, 30 fps, no audio. Frame 0 is
     the finished logo (bulb + "ESP32" + "CHIA SẺ KIẾN THỨC" on `#F5F1E8`), held 0.4 s, then it
