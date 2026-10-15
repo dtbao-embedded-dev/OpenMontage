@@ -67,7 +67,7 @@ A brief that explicitly asks for something different overrides a rule; say so wh
 - Every video opens on the brand intro of its series (see Release), so each series has its own
   TikTok cover:
   - Desk FX Screen series (`Desk-FX-Screen`, user decision 2026-10-15): the learning-series logo intro
-    with a rust pill "SERIES · DESK FX SCREEN" above the bulb on every frame, frame 0 included —
+    with a bold rust pill "DESK FX SCREEN" centred in the empty band above the logo on every frame, frame 0 included —
     `E:\Baotd\media\brand\desk-fx-screen-logo-intro-1080x1920.mp4` (same 4.2 s timing) and
     `desk-fx-screen-logo-intro-last.png` for the hold; source `desk-fx-screen-logo-intro.py` next to them
     (overlays the badge on `esp32-logo-intro-1080x1920.mp4`; re-run it after re-rendering that mp4).
