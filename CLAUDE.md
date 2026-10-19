@@ -145,6 +145,9 @@ Learning series (user decision 2026-10-11): the look is derived from the channel
   while speech plays. `audio_mixer` `full_mix` settings that achieve it with the Pixabay tracks
   used so far: music track `volume: 0.1`, `ducking.music_volume_during_speech: 0.05`.
   (0.35 / 0.18 left music only ~2 dB under the voice — too loud.)
+  Those values predate upstream `audio_mixer` #761 (amix no longer scales tracks by 1/N, so the
+  voice is ~17 dB louder against the music): since then 0.1 / 0.05 leaves ~28 dB; zephiramusic
+  needed 0.26 / 0.13 for 12.2 dB (Video 49, 2026-10-19). Older per-track values are a start, not an answer.
 - Verify after mixing: compare mean volume of speech windows vs narration gaps (ffmpeg
   `volumedetect`); re-mix if the gap is under ~10 dB.
 
