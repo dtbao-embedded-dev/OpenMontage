@@ -92,7 +92,7 @@ def test_theme_text_color_is_threaded_into_overlay_components(component: str) ->
     [
         ("components/SectionTitle.tsx", "color: textColor,"),
         ("components/StatReveal.tsx", "color: textColor,"),
-        ("components/HeroTitle.tsx", "color: i < 8 ? accentColor : textColor,"),
+        ("components/HeroTitle.tsx", "color: i < firstWordLen ? accentColor : textColor,"),
         ("components/HeroTitle.tsx", "color: subtitleColor,"),
         ("components/HeroTitle.tsx", "backgroundColor: accentColor,"),
         ("components/HeroTitle.tsx", "background: scrimBackground,"),
