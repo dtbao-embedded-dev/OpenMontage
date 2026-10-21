@@ -44,11 +44,16 @@ A brief that explicitly asks for something different overrides a rule; say so wh
   - `Desk-FX-Screen\` — the Desk FX Screen build series (scripts in `E:\Baotd\media\content\desk-fx-screen\`;
     user decision 2026-10-13). Named like `Learining-ESP32\` (`Video <N> <Title>.mp4`, `N` = the script's video number);
     its own intro (see Intro card), the same look; the intro line opens this series instead of the learning series.
+  - `Other\` — standalone videos that belong to no series (user decision 2026-10-21; first: the Whistle
+    speech-to-text demo on the ESP32-P4). Learning-series logo intro, look and closing line; the intro line is
+    a plain greeting plus what the video does, with no series or video number, and the pill under the logo is
+    `<chip> · <topic>`.
 
   Name the copy — ready to post as is:
   - `Learining-ESP32\`: `Video <N> <Title>.mp4`. `N` = highest `N` already in that folder + 1
     (`1` when empty), in delivery order.
   - `News-ESP32\`: `<Title>.mp4` — no `Video <N>` prefix (user decision 2026-10-10).
+  - `Other\`: `<Title>.mp4` — no `Video <N>` prefix (user decision 2026-10-21).
 
   `Title` = the script title in Vietnamese with
   diacritics and spaces (these folders are exempt from the workspace naming rule); replace `:`
