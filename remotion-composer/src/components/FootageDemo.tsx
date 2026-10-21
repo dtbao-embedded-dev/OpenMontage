@@ -4,16 +4,13 @@ import {
   Easing,
   Freeze,
   OffthreadVideo,
-  cancelRender,
-  continueRender,
-  delayRender,
   interpolate,
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
 import { resolveAsset } from "../lib/resolveAsset";
-import chakraBoldUrl from "../fonts/ChakraPetch-Bold.ttf";
-import chakraSemiUrl from "../fonts/ChakraPetch-SemiBold.ttf";
+// Chakra Petch is registered (and waited for) by ChipNaming's font loader.
+import "./ChipNaming";
 
 // Camera footage of a device in a card, in the learning-series logo look (CLAUDE.md → Look): the logo
 // intro, then the clip stays on screen while the header and the panel below it change per phase.
@@ -35,20 +32,6 @@ const C = {
 const DISPLAY = "'Chakra Petch', Inter, system-ui, sans-serif";
 const BODY = "Inter, system-ui, sans-serif";
 const NO_LIGA: React.CSSProperties = { fontVariantLigatures: "none", fontFeatureSettings: '"calt" 0, "liga" 0' };
-
-if (typeof FontFace !== "undefined" && typeof document !== "undefined") {
-  const handle = delayRender("Loading bundled Chakra Petch (FootageDemo)", { timeoutInMilliseconds: 60000 });
-  const faces = [
-    new FontFace("Chakra Petch", `url(${chakraBoldUrl}) format('truetype')`, { weight: "700" }),
-    new FontFace("Chakra Petch", `url(${chakraSemiUrl}) format('truetype')`, { weight: "600" }),
-  ];
-  Promise.all(faces.map((f) => f.load()))
-    .then((loaded) => {
-      loaded.forEach((f) => document.fonts.add(f));
-      continueRender(handle);
-    })
-    .catch((err) => cancelRender(err));
-}
 
 // ---------------------------------------------------------------------------
 // Data shapes
