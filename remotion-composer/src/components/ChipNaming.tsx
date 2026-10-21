@@ -36,18 +36,22 @@ const BODY = "Inter, system-ui, sans-serif";
 const NO_LIGA: React.CSSProperties = { fontVariantLigatures: "none", fontFeatureSettings: '"calt" 0, "liga" 0' };
 
 // Chakra Petch is bundled (google/fonts OFL TTF, latin + latin-ext + vietnamese); rendering waits for it.
+// Registered in a microtask, like Explainer's Inter: a delayRender handle created while the bundle is still
+// evaluating gets wiped, so it is never cleared and its 60 s timeout fails any render that runs longer.
 if (typeof FontFace !== "undefined" && typeof document !== "undefined") {
-  const handle = delayRender("Loading bundled Chakra Petch", { timeoutInMilliseconds: 60000 });
-  const faces = [
-    new FontFace("Chakra Petch", `url(${chakraBoldUrl}) format('truetype')`, { weight: "700" }),
-    new FontFace("Chakra Petch", `url(${chakraSemiUrl}) format('truetype')`, { weight: "600" }),
-  ];
-  Promise.all(faces.map((f) => f.load()))
-    .then((loaded) => {
-      loaded.forEach((f) => document.fonts.add(f));
-      continueRender(handle);
-    })
-    .catch((err) => cancelRender(err));
+  queueMicrotask(() => {
+    const handle = delayRender("Loading bundled Chakra Petch", { timeoutInMilliseconds: 60000 });
+    const faces = [
+      new FontFace("Chakra Petch", `url(${chakraBoldUrl}) format('truetype')`, { weight: "700" }),
+      new FontFace("Chakra Petch", `url(${chakraSemiUrl}) format('truetype')`, { weight: "600" }),
+    ];
+    Promise.all(faces.map((f) => f.load()))
+      .then((loaded) => {
+        loaded.forEach((f) => document.fonts.add(f));
+        continueRender(handle);
+      })
+      .catch((err) => cancelRender(err));
+  });
 }
 
 // ---------------------------------------------------------------------------
