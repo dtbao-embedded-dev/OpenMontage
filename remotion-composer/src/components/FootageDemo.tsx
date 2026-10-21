@@ -95,7 +95,13 @@ export interface FdRow {
 }
 
 export type FdPanel =
-  | { kind: "rows"; rows: FdRow[]; note?: { text: string; at: number } }
+  | {
+      kind: "rows";
+      rows: FdRow[];
+      note?: { text: string; at: number };
+      /** Rows wait at 0.3 opacity from the phase start instead of hidden until their cue. */
+      dim?: boolean;
+    }
   | {
       kind: "record";
       label: string;
@@ -338,15 +344,18 @@ const PANEL_TOP = 940;
 const RowsPanel: React.FC<{ p: Extract<FdPanel, { kind: "rows" }>; t: number }> = ({ p, t }) => {
   const STEP = 104;
   const cur = p.rows.reduce((acc, r, i) => (t >= r.at ? i : acc), -1);
+  const base = p.dim ? 0.3 : 0;
+  const reveal = (at: number) => base + (1 - base) * show(t, at, 0.35);
+  const lineLen = STEP * (p.rows.length - 1) * (p.dim ? 1 : show(t, p.rows[p.rows.length - 1].at - 0.3, 0.3));
   return (
     <div style={{ position: "absolute", left: CARD.left, top: PANEL_TOP, width: CARD.width }}>
       <svg width={CARD.width} height={STEP * p.rows.length} style={{ position: "absolute", left: 0, top: 0 }}>
-        {p.rows.length > 1 && (
+        {p.rows.length > 1 && lineLen > 1 && (
           <line
             x1={30}
             y1={40}
             x2={30}
-            y2={40 + STEP * (p.rows.length - 1) * show(t, p.rows[p.rows.length - 1].at - 0.3, 0.3)}
+            y2={40 + lineLen}
             stroke={C.navy}
             strokeWidth={8}
             strokeLinecap="round"
@@ -354,13 +363,13 @@ const RowsPanel: React.FC<{ p: Extract<FdPanel, { kind: "rows" }>; t: number }> 
           />
         )}
         {p.rows.map((r, i) => (
-          <g key={i} opacity={show(t, r.at, 0.3)}>
+          <g key={i} opacity={reveal(r.at)}>
             <Pad x={30} y={40 + STEP * i} filled={i === cur} />
           </g>
         ))}
       </svg>
       {p.rows.map((r, i) => {
-        const a = show(t, r.at, 0.35);
+        const a = reveal(r.at);
         const color = r.tone === "no" ? C.rust : r.tone === "ok" ? C.ok : C.navy;
         return (
           <div
@@ -414,9 +423,11 @@ const RecordPanel: React.FC<{ p: Extract<FdPanel, { kind: "record" }>; t: number
   const BAR = 12;
   const GAPX = (CARD.width - 64 - N * BAR) / (N - 1);
   const idx = Math.round((clipT - p.levelsAt) * clipFps);
-  const blink = live ? 0.55 + 0.45 * Math.cos(t * Math.PI * 2) : 0.35;
+  const blink = live ? 0.55 + 0.45 * Math.cos(t * Math.PI * 2) : 1;
+  // Waits dimmed until the button is pressed, so "recording" never shows before it starts.
+  const armed = 0.35 + 0.65 * show(t, p.counterAt, 0.3);
   return (
-    <div style={{ position: "absolute", left: CARD.left, top: PANEL_TOP, width: CARD.width }}>
+    <div style={{ position: "absolute", left: CARD.left, top: PANEL_TOP, width: CARD.width, opacity: armed }}>
       <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
         <span style={{ width: 30, height: 30, borderRadius: 15, background: C.rust, opacity: blink }} />
         <span style={{ fontFamily: BODY, fontWeight: 600, fontSize: 36, color: C.rust }}>{p.label}</span>
@@ -633,7 +644,7 @@ const BarsPanel: React.FC<{ p: Extract<FdPanel, { kind: "bars" }>; t: number }> 
               <span style={{ fontFamily: BODY, fontWeight: 600, fontSize: 36, color: C.navy }}>{r.label}</span>
               <span style={{ fontFamily: DISPLAY, fontWeight: 700, fontSize: 64, color: i === 0 ? C.orange : C.navy }}>{r.ratio}</span>
             </div>
-            <div style={{ position: "absolute", top: 64, left: 0, width: CARD.width }}>
+            <div style={{ position: "absolute", top: 92, left: 0, width: CARD.width }}>
               {bar(r.audio, false, 0)}
               {bar(r.decode, true, 70)}
             </div>
@@ -673,8 +684,9 @@ export const FootageDemo: React.FC<{ data: FdData }> = ({ data }) => {
           <ClipCard clip={clip} t={t} />
           {phases.map((ph, i) => {
             const next = phases[i + 1]?.at;
-            // Phases crossfade: the outgoing one fades out while the next fades in.
-            const a = (i === 0 ? 1 : show(t, ph.at, 0.35)) * (next === undefined ? 1 : 1 - show(t, next, 0.35));
+            // Phases crossfade with a short lead: the outgoing one is mostly gone before the next comes in,
+            // so two panels never sit on top of each other at half opacity.
+            const a = (i === 0 ? 1 : show(t, ph.at + 0.1, 0.35)) * (next === undefined ? 1 : 1 - show(t, next - 0.05, 0.25));
             if (a <= 0 || (i > 0 && t < ph.at)) return null;
             const p = ph.panel;
             return (
