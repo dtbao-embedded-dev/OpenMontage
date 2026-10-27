@@ -37,7 +37,15 @@ A brief that explicitly asks for something different overrides a rule; say so wh
   no spaces, no Vietnamese diacritics), then the local time the render finished.
   Example: `esp32-series-lineup-20261008-1123.mp4`. Pass it as the render `output_path`.
   If two variants finish in the same minute, add the aspect: `-916` (9:16) / `-169` (16:9).
-- **Release:** after every render, copy the video to its series folder under
+- **Concat is the release path** (user decision 2026-10-27, first run Video 61): the HyperFrames/Remotion render is
+  the picture source, not the delivery. Build the Concat project from it (`python scripts/concat_build.py <slug>`:
+  scene clips, voice clips, music bed in `projects/<slug>/concat/<slug>/`), export, master the audio
+  (`scripts/concat_master.py`, run by concat_build: loudnorm to the series' -14 LUFS, picture stream copied), check
+  with `scripts/concat_compare.py` (must print `PASS`), and release that mastered
+  `renders/<topic>-concat-<YYYYMMDD-HHMM>.mp4`. Changes after that are made in the Concat project first; go back to
+  the composition only for new pixels or new words (`workflow/video-make.md` step 10). A project without the parts
+  concat_build needs (`edit_decisions.json` cuts and section starts, per-section narration, music bed): ask first.
+- **Release:** after every Concat export (see above), copy the mastered file to its series folder under
   `E:\Baotd\media\release\` (user decision 2026-10-10; folder names spelled as the user created them):
   - `Learining-ESP32\` — the ESP32 learning series. The default.
   - `News-ESP32\` — news videos: only when the brief asks for a news video or for this folder.
@@ -58,10 +66,10 @@ A brief that explicitly asks for something different overrides a rule; say so wh
   `Title` = the script title in Vietnamese with
   diacritics and spaces (these folders are exempt from the workspace naming rule); replace `:`
   with ` -` and drop `? * " < > | / \`, which Windows forbids. Example:
-  `Video 4 Arduino, ESP-IDF hay MicroPython trên ESP32-S3.mp4`. A re-render of a delivered
-  video replaces its file (and keeps its number). The render in `projects/` keeps the
-  `<topic>-<YYYYMMDD-HHMM>.mp4` name. The user reviews only what is in the release folder — a
-  render not copied there is not delivered.
+  `Video 4 Arduino, ESP-IDF hay MicroPython trên ESP32-S3.mp4`. A new export of a delivered
+  video replaces its file (and keeps its number). The files in `projects/` keep their
+  `<topic>-<YYYYMMDD-HHMM>.mp4` / `<topic>-concat-<YYYYMMDD-HHMM>.mp4` names. The user reviews only what is in the
+  release folder — a file not copied there is not delivered.
 - **Demo repo cleanup** (user decision 2026-10-13): a scratch firmware/simulation repo made for
   a video (`E:\esp-v<N>-demo`, `N` = video number) is deleted as soon as that video is delivered
   (release copy made). Before deleting, copy into `projects/<slug>/work/` anything a re-render
