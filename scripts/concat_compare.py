@@ -4,7 +4,8 @@
 
 Prints duration, integrated loudness, speech-over-gap level (the project's build_hf.speech_vs_gap), sample peak
 with the count of samples at full scale, and picture SSIM. Exits 1 when the export clips, its speech sits less
-than 10 dB over the gaps, the durations differ by more than a frame, or the picture SSIM (Y) is under 0.999.
+than 10 dB over the gaps, its loudness is more than 1 LU off the render's, the durations differ by more than a
+frame, or the picture SSIM (Y) is under 0.999. The Concat export is the release copy (user decision 2026-10-27).
 """
 import importlib.util
 import json
@@ -65,13 +66,15 @@ def main() -> None:
     for name, p in (("render", hf), ("concat", cc)):
         d, l, (pk, n) = duration(p), lufs(p), peaks(p)
         print(f"{name:7s} {d:8.3f} s  {l:6.1f} LUFS  peak {pk:.3f} ({n} samples at full scale)")
-        res[name] = (d, gap_db(B, p), n)
+        res[name] = (d, gap_db(B, p), n, l)
     s = ssim_y(hf, cc)
     bad = []
     if res["concat"][2]:
         bad.append("export clips")
     if res["concat"][1] < 10:
         bad.append("speech < 10 dB over gaps")
+    if abs(res["render"][3] - res["concat"][3]) > 1.0:
+        bad.append("loudness more than 1 LU off the render")
     if abs(res["render"][0] - res["concat"][0]) > 1 / 30:
         bad.append("durations differ")
     if s < 0.999:

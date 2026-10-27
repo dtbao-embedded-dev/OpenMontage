@@ -1,6 +1,11 @@
 """Rebuild a finished OpenMontage project as a Concat project (headless, over MCP), then export it.
 
-    python scripts/concat_build.py <slug> [--render renders/<file>.mp4] [--force] [--no-export]
+    python scripts/concat_build.py <slug> [--render renders/<file>.mp4] [--project-dir DIR] [--force] [--no-export]
+    python scripts/concat_build.py <slug> --stems-only
+
+--stems-only rewrites work/concat_stems/narration_<id>.wav (the files the Concat project's voice clips point to)
+from the current locked narration and stops, so a re-taken section reaches an existing, hand-edited project
+without rebuilding it; a take of another length still needs its clip trimmed or moved in Concat.
 
 Inputs from projects/<slug>/: artifacts/edit_decisions.json (scene cuts, section starts, end), the HyperFrames
 render (default: newest renders/<slug>-2*.mp4), assets/audio/narration_<id>.wav, assets/music/music_bed.wav,
@@ -10,14 +15,19 @@ Timeline (1080x1920, 30 fps), one lane each:
   T1 picture: the render, muted, split at every scene cut into clips named "scene <id>", so a scene can be
      trimmed or replaced by hand.
   T2 narration: one clip "voice <id>" per locked section at its start, pre-mastered by ffmpeg into
-     work/concat_stems/ (gain to the -16 LUFS the audio_mixer full mix is normalised to, then a -2 dBFS limiter):
-     Concat has no master limiter, so a plain clip gain clips the export (Video 61: 160 samples at full scale).
+     work/concat_stems/ (gain to -16 LUFS, then a -2 dBFS limiter) so the mix never clips: Concat has no
+     master limiter, a plain clip gain clipped the export (Video 61: 160 samples at full scale), and it passes
+     clip audio through unchanged. Loudness to the series' level is done after the export by concat_master.py:
+     per-section loudnorm reached only -16 to -17 LUFS and a voice limiter to -14.5 LUFS needed ~10 dB of peak
+     cut (Video 61 trials).
   T3 music: the music bed, fade in 1 s / out 3 s, one constant volume so it sits ~12 dB under the speech
      (CLAUDE.md, Audio mix). No ducking keyframes: Concat replaces a key that lies within ~0.2 % of the clip
      length of another (on a 229 s clip keys 0.3 s apart merge, 0.5 s apart stay), so ramps around the 0.6 s
      section gaps collapse; with gaps that short a constant level measures the same.
-The project is saved in projects/<slug>/concat/<slug>/ (open it in the Concat window to edit) and exported to
-renders/<slug>-concat-<YYYYMMDD-HHMM>.mp4. Check the export with scripts/concat_compare.py.
+The project is saved in projects/<slug>/concat/<slug>/ (or --project-dir DIR/<slug>; open it in the Concat window
+to edit), exported to work/concat_export.mp4, and mastered by concat_master.py into
+renders/<slug>-concat-<YYYYMMDD-HHMM>.mp4, the release copy (user decision 2026-10-27). Check that file with
+scripts/concat_compare.py.
 """
 from __future__ import annotations
 
@@ -30,6 +40,7 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from concat_master import master, release_path  # noqa: E402
 from concat_mcp import ConcatMCP  # noqa: E402
 
 REPO = Path(__file__).resolve().parent.parent
@@ -96,8 +107,11 @@ def main() -> None:
                         f"volume={v_speech:.4f},alimiter=limit={lim:.4f}:attack=2:release=50:level=false",
                         "-c:a", "pcm_s16le", str(out)], check=True)
         narr[sid] = out
+    if "--stems-only" in sys.argv:
+        print("stems written to", stems)
+        return
 
-    proj_dir = base / "concat"
+    proj_dir = Path(sys.argv[sys.argv.index("--project-dir") + 1]) if "--project-dir" in sys.argv else base / "concat"
     path = proj_dir / slug
     if path.exists():
         if "--force" not in sys.argv:
@@ -147,10 +161,11 @@ def main() -> None:
         print(f"timeline {tl['duration']:.2f} s, {len(tl['clips'])} clips")
         if "--no-export" in sys.argv:
             return
-        out = base / "renders" / f"{slug}-concat-{time.strftime('%Y%m%d-%H%M')}.mp4"
+        raw = base / "work" / "concat_export.mp4"
         t = time.time()
-        st = c.export(P, str(out), crf=16, preset="slow")
-        print(f"export {st.get('state')} in {time.time() - t:.0f} s -> {out}")
+        st = c.export(P, str(raw), crf=16, preset="slow")
+        print(f"export {st.get('state')} in {time.time() - t:.0f} s -> {raw}")
+    print("mastered ->", master(raw, release_path(slug)))
 
 
 if __name__ == "__main__":
