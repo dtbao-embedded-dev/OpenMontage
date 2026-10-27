@@ -8,7 +8,11 @@ Video 61) but from the HyperFrames render, which lifts it to -14.3; released Vid
 -14.1/-14.0/-13.9/-14.0 LUFS, peak about -1.2 dBFS. This runs loudnorm (I=-14:LRA=11:TP=-1.5, dynamic mode) on
 the whole Concat mix, re-encodes the audio as AAC 192 kb/s, copies the H.264 stream, and writes
 projects/<slug>/renders/<slug>-concat-<YYYYMMDD-HHMM>.mp4, the release copy (user decision 2026-10-27).
-Loudness per clip is tried and rejected in concat_build.py's docstring.
+Loudness per clip is tried and rejected in concat_build.py's docstring. Concat's own audio controls, checked on
+0.2.8 (2026-10-27): per-clip volume, fades, volume keys, track mute, and the per-clip filter 'Normalize Loudness'
+(concat.loudness, target -30..-12); no master bus, track volume, limiter, compressor, ducking (issue #282, open) or
+audio export option. concat.loudness keeps peaks near -2 dBFS: target -14 on the raw voice sections reached
+-15.3..-16.7 LUFS and -16.3 LUFS for the export, the same with Enhance Voice 60 % in front of it.
 """
 from __future__ import annotations
 
