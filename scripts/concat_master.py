@@ -26,12 +26,23 @@ REPO = Path(__file__).resolve().parent.parent
 MASTER = "loudnorm=I=-14:LRA=11:TP=-1.5,aresample=48000"  # series level (see above)
 
 
+def video_seconds(src: Path) -> str:
+    fp = shutil.which("ffprobe")
+    if not fp:
+        raise SystemExit("ffprobe not on PATH")
+    return subprocess.run([fp, "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=duration", "-of", "csv=p=0",
+                           str(src)], capture_output=True, text=True, check=True).stdout.strip()
+
+
 def master(src: Path, out: Path) -> Path:
     ff = shutil.which("ffmpeg")
     if not ff:
         raise SystemExit("ffmpeg not on PATH")
+    # loudnorm + AAC can end the audio a few frames past the picture (Video 63: +0.08 s), which concat_compare.py
+    # reports as a duration change: cut the output at the picture's own length.
     subprocess.run([ff, "-y", "-v", "error", "-i", str(src), "-map", "0:v:0", "-map", "0:a:0", "-c:v", "copy",
-                    "-af", MASTER, "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", str(out)], check=True)
+                    "-af", MASTER, "-c:a", "aac", "-b:a", "192k", "-t", video_seconds(src), "-movflags", "+faststart",
+                    str(out)], check=True)
     return out
 
 
