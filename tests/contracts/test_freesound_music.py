@@ -10,9 +10,10 @@ Two things have to hold, and they are separate failure modes:
 
 1. ``_search`` must *ask* the API for ``license``. Without it the field is
    absent from the payload and every downstream fix is dead code.
-2. ``execute`` must *surface* it, falling back to the generic string when the
-   API omits it, so partial responses keep the previous behaviour rather than
-   handing the agent a bare ``None``.
+2. ``execute`` must *surface* it: ``license`` is the short key (``cc0``,
+   ``by``...), ``license_url`` the URL the API reported. When the API omits
+   it, the key is ``None`` and the attribution text says the license is
+   unknown, rather than guessing one.
 
 The registry is not exercised here; the tool is instantiated directly because
 the assertion is about this tool's contract, not about discovery.
@@ -27,7 +28,6 @@ import pytest
 
 from tools.audio.freesound_music import FreesoundMusic
 
-GENERIC = "Creative Commons (check individual sound license)"
 LICENSE = "http://creativecommons.org/licenses/by/4.0/"
 
 
@@ -97,18 +97,23 @@ def test_search_requests_the_license_field(monkeypatch, tool):
 
 
 def test_result_carries_the_sound_license(monkeypatch, tool):
+    """`license` is the short key; the URL the API reported is `license_url`."""
     result = _run(monkeypatch, tool, _sound(), query="with-license")
     assert result.success is True
-    assert result.data["license"] == LICENSE
+    assert result.data["license"] == "by"
+    assert result.data["license_url"] == LICENSE
+    assert result.data["attribution_required"] is True
 
 
-def test_falls_back_to_generic_when_license_is_absent(monkeypatch, tool):
-    """A payload without `license` must not regress to a bare None."""
+def test_absent_license_is_reported_as_unknown(monkeypatch, tool):
+    """A payload without `license` must say so instead of guessing a license."""
     sound = _sound()
     del sound["license"]
     result = _run(monkeypatch, tool, sound, query="no-license")
     assert result.success is True
-    assert result.data["license"] == GENERIC
+    assert result.data["license"] is None
+    assert result.data["license_url"] == ""
+    assert "unknown license" in result.data["attribution"]
 
 
 def test_author_is_surfaced_even_without_a_license(monkeypatch, tool):
