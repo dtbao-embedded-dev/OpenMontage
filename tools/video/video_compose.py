@@ -1148,16 +1148,25 @@ class VideoCompose(BaseTool):
 
         real_project_dir = entry_path.parent.resolve()
 
-        # Derive a stable slug. Prefer the first segment under a `projects/` ancestor.
+        # Derive a stable slug: the first segment under the projects root. The root may be a
+        # junction to a folder outside the repo (e.g. <media>/projects/lesson-video), so compare
+        # resolved paths first; fall back to the first segment under a `projects/` ancestor.
         slug = real_project_dir.name
         try:
-            parts = real_project_dir.parts
-            if "projects" in parts:
-                i = parts.index("projects")
-                if i + 1 < len(parts):
-                    slug = parts[i + 1]
+            from lib.paths import PROJECTS_DIR
+
+            rel = real_project_dir.relative_to(PROJECTS_DIR.resolve())
+            if rel.parts:
+                slug = rel.parts[0]
         except Exception:
-            pass
+            try:
+                parts = real_project_dir.parts
+                if "projects" in parts:
+                    i = parts.index("projects")
+                    if i + 1 < len(parts):
+                        slug = parts[i + 1]
+            except Exception:
+                pass
 
         staging_root = composer_dir / "projects"
         staging_root.mkdir(parents=True, exist_ok=True)
